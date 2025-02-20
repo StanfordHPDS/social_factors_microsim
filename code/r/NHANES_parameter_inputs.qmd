@@ -1,0 +1,148 @@
+---
+title: "NHANES parameter inputs"
+format: html
+date: "today"
+---
+
+```{r}
+#| label: setup
+library(tidyverse)
+library(survey)
+library(copula)
+library(haven)
+library(jsonlite)
+library(jtools)
+library(here)
+data_dir <- here::here("data_and_inputs/nhanes_inputs")
+if (!dir.exists(data_dir)) {
+  dir.create(data_dir)
+}
+```
+
+## Demographics 2013-2018
+
+```{r}
+#| label: load_demographics
+download_and_read_xpt <- function(url) {
+  .tf <- tempfile()
+  download.file(url, .tf, mode = "wb")
+
+  read_xpt(.tf)
+}
+
+load_nhanes_and_select <- function(urls, ...) {
+  map(urls, download_and_read_xpt) |>
+    list_rbind() |>
+    select(...)
+}
+
+demographic_urls <- c(
+  "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2017/DataFiles/DEMO_J.xpt",
+  "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2015/DataFiles/DEMO_I.xpt",
+  "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2013/DataFiles/DEMO_H.xpt"
+)
+
+demo <- load_nhanes_and_select(
+  demographic_urls,
+  SEQN, RIAGENDR, RIDAGEYR, SDMVSTRA,
+  SDMVPSU, WTMEC2YR, RIDRETH3
+)
+```
+
+## Healthcare utilization questions 2013-2018
+
+```{r}
+#| label: load_huq
+huq_urls <- c(
+  "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2017/DataFiles/HUQ_J.xpt",
+  "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2015/DataFiles/HUQ_I.xpt",
+  "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2013/DataFiles/HUQ_H.xpt"
+)
+huq <- load_nhanes_and_select(
+  huq_urls,
+  SEQN, HUQ030, HUQ041, HUQ051
+)
+```
+
+## Health insurance 2013-2018
+
+```{r}
+#| label: load_hiq
+hiq_urls <- c(
+  "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2017/DataFiles/HIQ_J.xpt",
+  "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2015/DataFiles/HIQ_I.xpt",
+  "https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2013/DataFiles/HIQ_H.xpt"
+)
+
+
+hiq <- load_nhanes_and_select(
+  hiq_urls,
+  SEQN, HIQ011
+)
+```
+
+
+```{r}
+#| label: filter_data
+# Join the data across the survey datasets
+nhanes <- list(demo, huq, hiq) |>
+  reduce(left_join, by = "SEQN")
+
+# adjust weights and filter data
+# limit to survey participants aged between 35-45y
+# self-identified as non-Hispanic Black (NHB) or non-Hispanic white (NHW)
+nhanes <- nhanes |>
+  mutate(
+    WTMEC6YR = WTMEC2YR / 3,
+    female = if_else(RIAGENDR == 2, 1, 0),
+    black = if_else(RIDRETH3 == 4, 1, 0),
+    white = if_else(RIDRETH3 == 3, 1, 0),
+    place = if_else((HUQ030 == 1) | (HUQ030 == 3), 1, 0),
+    insurance = if_else(HIQ011 == 1, 1, 0)
+  ) |>
+  replace_na(list(treated = 0)) |>
+  filter(!is.na(RIDAGEYR), RIDAGEYR >= 35 & RIDAGEYR <= 45) |>
+  filter((black == 1 | white == 1))
+
+nhanes_svy <- svydesign(
+  data = nhanes,
+  ids = ~SDMVPSU,
+  strata = ~SDMVSTRA,
+  weights = ~WTMEC6YR,
+  nest = TRUE
+)
+```
+
+```{r}
+#| label: nhb_prop
+# proportion of NHW and NHB individuals
+prop_black <- svymean(~black, design = nhanes_svy)[[1]]
+write_json(prop_black, file.path(data_dir, "prop_black.json"))
+```
+
+```{r}
+#| label: female_prop
+# proportion of female individuals
+prop_female <- svymean(~female, design = nhanes_svy)[[1]]
+write_json(prop_female, file.path(data_dir, "prop_female.json"))
+```
+
+```{r}
+#| label: insurance_prop
+# proportion of NHB and NHW adults with insurance
+insurance_prop_NHW <- svyby(~insurance, ~black, design = nhanes_svy, svymean)[[2]][1]
+insurance_prop_NHB <- svyby(~insurance, ~black, design = nhanes_svy, svymean)[[2]][2]
+write_json(insurance_prop_NHW, file.path(data_dir, "insurance_prop_NHW.json"))
+write_json(insurance_prop_NHB, file.path(data_dir, "insurance_prop_NHB.json"))
+```
+
+```{r}
+#| label: place_prop
+# proportion of adults with place for routine care by insurance status
+place_prop_uninsured <- svyby(~place, ~insurance, design = nhanes_svy, svymean)[[2]][1]
+place_prop_insured <- svyby(~place, ~insurance, design = nhanes_svy, svymean)[[2]][2]
+write_json(place_prop_uninsured, file.path(data_dir, "place_prop_uninsured.json"))
+write_json(place_prop_insured, file.path(data_dir, "place_prop_insured.json"))
+```
+
+
