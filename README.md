@@ -18,7 +18,7 @@ conda activate sff-env
 
 ### Main results
 
-The following commands run our main results and outputs into the [Results](https://github.com/StanfordHPDS/social_factors_microsim/tree/main/Results) folder. The `develop_cohort.py -n "cohort_size"` script creates our cohort of 100,000 individuals. The `run_model.py` runs the standard model and standard model with our social factor framework under both the standard of care and the new treatment.
+The following commands run our main results and outputs into the [Results](https://github.com/StanfordHPDS/social_factors_microsim/tree/main/results) folder. The `develop_cohort.py -n "cohort_size"` script creates our cohort of 100,000 individuals. The `run_model.py` runs the standard model and standard model with our social factor framework under both the standard of care and the new treatment.
 
 ```{python}
 python code/python/develop_cohort.py -n "100000" 
