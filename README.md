@@ -1,6 +1,6 @@
 # A Novel Decision Modeling Framework for Health Policy Analyses when Outcomes are Influenced by Social and Disease Processes
 
-This repository contains code for the paper "A novel decision modeling framework for health policy analyses when outcomes are influenced by social and disease processes" by Marika Cusick, Fernando Alarid-Escudero, Jeremy Goldhaber-Fiebert, and Sherri Rose.
+This repository contains code for the paper "A novel decision modeling framework for health policy analyses when outcomes are influenced by social and disease processes" by Marika Cusick, Fernando Alarid-Escudero, Jeremy Goldhaber-Fiebert, and Sherri Rose (2025), [medRxiv:10.1101/2025.02.21.25322671](https://www.medrxiv.org/content/10.1101/2025.02.21.25322671).
 
 We developed a novel decision-analytic modeling framework, social factors framework, to integrate social process into health policy simulation models. To demonstrate the value of our framework, we compared model results with and without our social factors framework for a simplified decision problem.
 
