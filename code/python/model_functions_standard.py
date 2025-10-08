@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import time
 from functions import *
+from parameters import *
 import os
 
 # identify overall folder directory for reading/saving files
@@ -10,7 +11,7 @@ parent_directory = os.path.dirname(current_directory)
 overall_folder = os.path.dirname(parent_directory)
 
 
-def generate_transitions_HS_standard(current_state_HS, current_state_DNH):
+def generate_transitions_HS_standard(params, current_state_HS, current_state_DNH):
     # Function:
     #   Returns a transition probability array for health system utilization
     #   states given the current health system utilization state
@@ -35,13 +36,13 @@ def generate_transitions_HS_standard(current_state_HS, current_state_DNH):
         transition_vec["DUT"] = [0, 0, 0, 1]
     # if sick, can transition to any state
     elif current_state_DNH == "S":
-        transition_vec["OHS"] = [1 - pOI, pOI, 0, 0]
-        transition_vec["IHS"] = [0, 1 - pDT, pDT, 0]
-        transition_vec["DT"] = [0, 0, 1 - pDTUT, pDTUT]
+        transition_vec["OHS"] = [1 - params["pOI"], params["pOI"], 0, 0]
+        transition_vec["IHS"] = [0, 1 - params["pDT"], params["pDT"], 0]
+        transition_vec["DT"] = [0, 0, 1 - params["pDTUT"], params["pDTUT"]]
         transition_vec["DUT"] = [0, 0, 0, 1]
     # If healthy, no transition into detected/treated
     else:
-        transition_vec["OHS"] = [1 - pOI, pOI, 0, 0]
+        transition_vec["OHS"] = [1 - params["pOI"], params["pOI"], 0, 0]
         transition_vec["IHS"] = [0, 1, 0, 0]
         transition_vec["DT"] = [0, 0, 1, 0]
         transition_vec["DUT"] = [0, 0, 0, 1]
@@ -81,7 +82,7 @@ life_table_mapping = {
 
 
 def generate_transitions_DNH_standard(
-    current_state_HS, current_state_DNH, age, sex, race, new_treatment
+    params, current_state_HS, current_state_DNH, age, sex, race, new_treatment
 ):
     # Function:
     #   Returns a transition probability array for disease natural history
@@ -102,9 +103,9 @@ def generate_transitions_DNH_standard(
 
     # if new treatment = True, we use more effective treatment hazard ratio
     if new_treatment == True:
-        rr_SD_dt = treatment_HR_NT * rr_SD_not_dt
+        rr_SD_dt = params["treatment_HR_NT"] * params["rr_SD_not_dt"]
     else:
-        rr_SD_dt = treatment_HR_SC * rr_SD_not_dt
+        rr_SD_dt = params["treatment_HR_SC"] * params["rr_SD_not_dt"]
 
     transition_vec = dict()
 
@@ -117,10 +118,10 @@ def generate_transitions_DNH_standard(
         # out of the health care system
         if current_state_HS == "OHS":
             # healthy
-            transition_vec["H"] = [1 - pHS - pHD, pHS, pHD]
+            transition_vec["H"] = [1 - params["pHS"] - pHD, params["pHS"], pHD]
             # increase mortality rate for sick individuals
             rHD = convert_to_prob(pHD)
-            rSD_not_dt = rHD * rr_SD_not_dt
+            rSD_not_dt = rHD * params["rr_SD_not_dt"]
             pSD_not_dt = convert_to_prob(rSD_not_dt)
             transition_vec["S"] = [0, 1 - pSD_not_dt, pSD_not_dt]
             # Dead
@@ -131,15 +132,15 @@ def generate_transitions_DNH_standard(
             # increase mortality rate for sick individuals (same as
             # out of health system (OHS))
             rHD = convert_to_prob(pHD)
-            rSD_not_dt = rHD * rr_SD_not_dt
+            rSD_not_dt = rHD * params["rr_SD_not_dt"]
             pSD_not_dt = convert_to_prob(rSD_not_dt)
 
-            transition_vec["H"] = [1 - pHS - pHD, pHS, pHD]
+            transition_vec["H"] = [1 - params["pHS"] - pHD, params["pHS"], pHD]
             transition_vec["S"] = [0, 1 - pSD_not_dt, pSD_not_dt]
             transition_vec["D"] = [0, 0, 1]
         # detected and treated
         else:
-            transition_vec["H"] = [1 - pHS - pHD, pHS, pHD]
+            transition_vec["H"] = [1 - params["pHS"] - pHD, params["pHS"], pHD]
 
             # increase mortality rate but include the treatment effect
             rHD = convert_to_prob(pHD)
@@ -158,7 +159,7 @@ def generate_transitions_DNH_standard(
     return transition_vec[current_state_DNH]
 
 
-def run_cohort_standard(new_treatment):
+def run_cohort_standard(params, new_treatment):
     # Function:
     #   Runs standard microsimulation model
     #   Returns health system utilization trace
@@ -196,6 +197,8 @@ def run_cohort_standard(new_treatment):
 
     age_values = population_df["starting_age"].tolist()
 
+    v_disc = 1 / (1 + params["disc_rate"]) ** np.arange(0, cycles + 1)
+
     start = time.time()
     years_to_death = [0 for i in range(N)]
     LY_disc = [0 for i in range(N)]
@@ -215,7 +218,7 @@ def run_cohort_standard(new_treatment):
         np.random.seed(population_df["seed"].iloc[i])
         for t in range(cycles):
             this_transition_HS = generate_transitions_HS_standard(
-                HS_state_trace[i, t], DNH_state_trace[i, t]
+                params, HS_state_trace[i, t], DNH_state_trace[i, t]
             )
             # randomly sample next health system utilization state using
             # transition probability array
@@ -223,6 +226,7 @@ def run_cohort_standard(new_treatment):
                 HS_states, size=1, p=this_transition_HS
             )[0]
             this_transition_DNH = generate_transitions_DNH_standard(
+                params,
                 HS_state_trace[i, t],
                 DNH_state_trace[i, t],
                 age_values[i],
@@ -239,13 +243,15 @@ def run_cohort_standard(new_treatment):
             age_values[i] = age_values[i] + 1
 
         # compute life years
-        DNH_state_trace_LY = np.array([mapping.get(x, x) for x in DNH_state_trace[i]])
+        DNH_state_trace_LY = np.array(
+            [params["mapping"].get(x, x) for x in DNH_state_trace[i]]
+        )
         # discounted life years
         LY_disc[i] = np.dot(DNH_state_trace_LY, v_disc)
 
         # compute quality-adjusted life years (QALYs)
         DNH_state_trace_QALY = np.array(
-            [QALY_mapping.get(x, x) for x in DNH_state_trace[i]]
+            [params["QALY_mapping"].get(x, x) for x in DNH_state_trace[i]]
         )
         QALY_val[i] = sum(DNH_state_trace_QALY)
         # discounted QALYs
@@ -253,7 +259,7 @@ def run_cohort_standard(new_treatment):
 
         # compute costs from health states
         DNH_state_trace_COST = np.array(
-            [COST_mapping.get(x, x) for x in DNH_state_trace[i]]
+            [params["COST_mapping"].get(x, x) for x in DNH_state_trace[i]]
         )
         COST_val[i] = sum(DNH_state_trace_COST)
         # discounted costs
@@ -262,13 +268,17 @@ def run_cohort_standard(new_treatment):
         # compute additional costs from treatment
         if new_treatment:
             treatment_rows = np.where(
-                (HS_state_trace[i] == "DT") & (DNH_state_trace[i] == "S"), COST_DT_NT, 0
+                (HS_state_trace[i] == "DT") & (DNH_state_trace[i] == "S"),
+                params["COST_DT_NT"],
+                0,
             )
             this_treatment_COST = sum(treatment_rows)
             this_treatment_COST_disc = np.dot(treatment_rows, v_disc)
         else:
             treatment_rows = np.where(
-                (HS_state_trace[i] == "DT") & (DNH_state_trace[i] == "S"), COST_DT_SC, 0
+                (HS_state_trace[i] == "DT") & (DNH_state_trace[i] == "S"),
+                params["COST_DT_SC"],
+                0,
             )
             this_treatment_COST = sum(treatment_rows)
             this_treatment_COST_disc = np.dot(treatment_rows, v_disc)

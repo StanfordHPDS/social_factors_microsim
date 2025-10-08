@@ -11,7 +11,7 @@ overall_folder = os.path.dirname(parent_directory)
 
 
 def generate_transitions_HS_social_framework(
-    current_state_HS, current_state_DNH, insurance
+    params, current_state_HS, current_state_DNH, insurance
 ):
     # Function:
     #   Returns a transition probability array for health system utilization
@@ -41,34 +41,54 @@ def generate_transitions_HS_social_framework(
         # if insured, use the transition probabilities with _ins
         if insurance == "Y":
             # out of system cannot enter detected states
-            transition_vec["OHS"] = [1 - pOI_ins, pOI_ins, 0, 0]
+            transition_vec["OHS"] = [1 - params["pOI_ins"], params["pOI_ins"], 0, 0]
             # in system can only go detected
-            transition_vec["IHS"] = [0, 1 - pDT_ins, pDT_ins, 0]
+            transition_vec["IHS"] = [0, 1 - params["pDT_ins"], params["pDT_ins"], 0]
             # detected/treated can become detected/untreated
-            transition_vec["DT"] = [0, 0, 1 - pDTUT_ins, pDTUT_ins]
+            transition_vec["DT"] = [0, 0, 1 - params["pDTUT_ins"], params["pDTUT_ins"]]
             # detected/untreated forever
             transition_vec["DUT"] = [0, 0, 0, 1]
         # if not insured, use the transition probabilities with no_ins
         if insurance == "N":
             # out of system cannot enter detected states
-            transition_vec["OHS"] = [1 - pOI_no_ins, pOI_no_ins, 0, 0]
+            transition_vec["OHS"] = [
+                1 - params["pOI_no_ins"],
+                params["pOI_no_ins"],
+                0,
+                0,
+            ]
             # in system can only go detected
-            transition_vec["IHS"] = [0, 1 - pDT_no_ins, pDT_no_ins, 0]
+            transition_vec["IHS"] = [
+                0,
+                1 - params["pDT_no_ins"],
+                params["pDT_no_ins"],
+                0,
+            ]
             # detected/treated can become detected/untreated
-            transition_vec["DT"] = [0, 0, 1 - pDTUT_no_ins, pDTUT_no_ins]
+            transition_vec["DT"] = [
+                0,
+                0,
+                1 - params["pDTUT_no_ins"],
+                params["pDTUT_no_ins"],
+            ]
             # detected/untreated forever
             transition_vec["DUT"] = [0, 0, 0, 1]
     # If healthy, no transition into detected/treated
     else:
         # if insured, use the transition probabilities with _ins
         if insurance == "Y":
-            transition_vec["OHS"] = [1 - pOI_ins, pOI_ins, 0, 0]
+            transition_vec["OHS"] = [1 - params["pOI_ins"], params["pOI_ins"], 0, 0]
             transition_vec["IHS"] = [0, 1, 0, 0]
             transition_vec["DT"] = [0, 0, 1, 0]
             transition_vec["DUT"] = [0, 0, 0, 1]
         # if not insured, use the transition probabilities with no_ins
         if insurance == "N":
-            transition_vec["OHS"] = [1 - pOI_no_ins, pOI_no_ins, 0, 0]
+            transition_vec["OHS"] = [
+                1 - params["pOI_no_ins"],
+                params["pOI_no_ins"],
+                0,
+                0,
+            ]
             transition_vec["IHS"] = [0, 1, 0, 0]
             transition_vec["DT"] = [0, 0, 1, 0]
             transition_vec["DUT"] = [0, 0, 0, 1]
@@ -122,7 +142,7 @@ life_table_mapping = {
 
 
 def generate_transitions_DNH_social_framework(
-    current_state_HS, current_state_DNH, age, sex, race, insurance, NT
+    params, current_state_HS, current_state_DNH, age, sex, race, insurance, NT
 ):
     # Function:
     #   Returns a transition probability array for disease natural history
@@ -144,9 +164,9 @@ def generate_transitions_DNH_social_framework(
 
     # if new treatment = True, we use more effective treatment hazard ratio
     if NT == True:
-        rr_SD_dt = treatment_HR_NT * rr_SD_not_dt
+        rr_SD_dt = params["treatment_HR_NT"] * params["rr_SD_not_dt"]
     else:
-        rr_SD_dt = treatment_HR_SC * rr_SD_not_dt
+        rr_SD_dt = params["treatment_HR_SC"] * params["rr_SD_not_dt"]
 
     transition_vec = dict()
 
@@ -160,10 +180,10 @@ def generate_transitions_DNH_social_framework(
 
         # out of the health care system
         if current_state_HS == "OHS":
-            transition_vec["H"] = [1 - pHS - pHD, pHS, pHD]
+            transition_vec["H"] = [1 - params["pHS"] - pHD, params["pHS"], pHD]
             # increase mortality rate for sick individuals
             rHD = convert_to_rate(pHD)
-            rSD_not_dt = rHD * rr_SD_not_dt
+            rSD_not_dt = rHD * params["rr_SD_not_dt"]
             pSD_not_dt = convert_to_prob(rSD_not_dt)
             transition_vec["S"] = [0, 1 - pSD_not_dt, pSD_not_dt]
             # Dead
@@ -174,15 +194,15 @@ def generate_transitions_DNH_social_framework(
             # increase mortality rate for sick individuals (same as
             # out of health system (OHS))
             rHD = convert_to_rate(pHD)
-            rSD_not_dt = rHD * rr_SD_not_dt
+            rSD_not_dt = rHD * params["rr_SD_not_dt"]
             pSD_not_dt = convert_to_prob(rSD_not_dt)
 
-            transition_vec["H"] = [1 - pHS - pHD, pHS, pHD]
+            transition_vec["H"] = [1 - params["pHS"] - pHD, params["pHS"], pHD]
             transition_vec["S"] = [0, 1 - pSD_not_dt, pSD_not_dt]
             transition_vec["D"] = [0, 0, 1]
 
         else:
-            transition_vec["H"] = [1 - pHS - pHD, pHS, pHD]
+            transition_vec["H"] = [1 - params["pHS"] - pHD, params["pHS"], pHD]
             # increase mortality rate but include the treatment effect
             rHD = convert_to_rate(pHD)
             rSD_dt = rHD * rr_SD_dt
@@ -200,7 +220,7 @@ def generate_transitions_DNH_social_framework(
     return transition_vec[current_state_DNH]
 
 
-def run_cohort_social_framework(new_treatment):
+def run_cohort_social_framework(params, new_treatment):
     # Function:
     #   Runs microsimulation model with social factors framework applied
     #   Returns health system utilization trace
@@ -239,6 +259,8 @@ def run_cohort_social_framework(new_treatment):
     # Everyone without routine place for healthcare starts out of health system (OHS)
     HS_state_trace[:, 0] = population_df["place"].tolist()
 
+    v_disc = 1 / (1 + params["disc_rate"]) ** np.arange(0, cycles + 1)
+
     start = time.time()
     years_to_death = [0 for i in range(N)]
     LY_disc = [0 for i in range(N)]
@@ -258,6 +280,7 @@ def run_cohort_social_framework(new_treatment):
         np.random.seed(population_df["seed"].iloc[i])
         for t in range(cycles):
             this_transition_HS = generate_transitions_HS_social_framework(
+                params,
                 HS_state_trace[i, t],
                 DNH_state_trace[i, t],
                 population_df["insurance"].iloc[i],
@@ -269,6 +292,7 @@ def run_cohort_social_framework(new_treatment):
             )[0]
 
             this_transition_DNH = generate_transitions_DNH_social_framework(
+                params,
                 HS_state_trace[i, t],
                 DNH_state_trace[i, t],
                 age_values[i],
@@ -286,13 +310,15 @@ def run_cohort_social_framework(new_treatment):
             age_values[i] = age_values[i] + 1
 
         # compute life years
-        DNH_state_trace_LY = np.array([mapping.get(x, x) for x in DNH_state_trace[i]])
+        DNH_state_trace_LY = np.array(
+            [params["mapping"].get(x, x) for x in DNH_state_trace[i]]
+        )
         # discounted life years
         LY_disc[i] = np.dot(DNH_state_trace_LY, v_disc)
 
         # compute quality-adjusted life years (QALYs)
         DNH_state_trace_QALY = np.array(
-            [QALY_mapping.get(x, x) for x in DNH_state_trace[i]]
+            [params["QALY_mapping"].get(x, x) for x in DNH_state_trace[i]]
         )
         QALY_val[i] = sum(DNH_state_trace_QALY)
         # discounted QALYs
@@ -300,7 +326,7 @@ def run_cohort_social_framework(new_treatment):
 
         # compute costs from health states
         DNH_state_trace_COST = np.array(
-            [COST_mapping.get(x, x) for x in DNH_state_trace[i]]
+            [params["COST_mapping"].get(x, x) for x in DNH_state_trace[i]]
         )
         COST_val[i] = sum(DNH_state_trace_COST)
         # discounted costs
@@ -308,21 +334,42 @@ def run_cohort_social_framework(new_treatment):
 
         # compute additional costs from treatment
         if new_treatment:
-            treatment_rows = np.where(
-                (HS_state_trace[i] == "DT") & (DNH_state_trace[i] == "S"), COST_DT_NT, 0
-            )
+            if population_df["insurance"].iloc[i] == "Y":
+                treatment_rows = np.where(
+                    (HS_state_trace[i] == "DT") & (DNH_state_trace[i] == "S"),
+                    params["COST_DT_NT"],
+                    0,
+                )
+            else:
+                treatment_rows = np.where(
+                    (HS_state_trace[i] == "DT") & (DNH_state_trace[i] == "S"),
+                    params["COST_DT_NT"] * params["COST_DT_multiplier_no_ins"],
+                    0,
+                )
             this_treatment_COST = sum(treatment_rows)
             this_treatment_COST_disc = np.dot(treatment_rows, v_disc)
         else:
             treatment_rows = np.where(
-                (HS_state_trace[i] == "DT") & (DNH_state_trace[i] == "S"), COST_DT_SC, 0
+                (HS_state_trace[i] == "DT") & (DNH_state_trace[i] == "S"),
+                params["COST_DT_SC"],
+                0,
             )
             this_treatment_COST = sum(treatment_rows)
             this_treatment_COST_disc = np.dot(treatment_rows, v_disc)
 
+        if population_df["insurance"].iloc[i] == "N":
+            sick_rows = np.where(
+                (DNH_state_trace[i] == "S"), params["COST_S_no_ins"], 0
+            )
+            this_sick_COST = sum(sick_rows)
+            this_sick_COST_disc = np.dot(sick_rows, v_disc)
+        else:
+            this_sick_COST = 0
+            this_sick_COST_disc = 0
+
         # add treatment costs to costs from health states
-        COST_val[i] = COST_val[i] + this_treatment_COST
-        COST_disc[i] = COST_disc[i] + this_treatment_COST_disc
+        COST_val[i] = COST_val[i] + this_treatment_COST + this_sick_COST
+        COST_disc[i] = COST_disc[i] + this_treatment_COST_disc + this_sick_COST_disc
 
         # compute death age
         years_to_death[i] = sum(DNH_state_trace_LY)
