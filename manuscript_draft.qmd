@@ -3,9 +3,9 @@ title: "A novel decision modeling framework for health policy analyses when outc
 author:
   - name: Marika M. Cusick
     corresponding: true
-    email: mmcusick@stanford.edu
+    email: marikacusick@jhu.edu
     affiliations:
-      - name: Department of Health Policy, Stanford University School of Medicine
+      - name: Department of Health Policy & Management, Johns Hopkins Bloomberg School of Public Health
   - name: Fernando Alarid-Escudero
     corresponding: false
     affiliations:
@@ -32,6 +32,12 @@ crossref:
       reference-prefix: Table S
       space-before-numbering: false
       latex-list-of-description: Supplementary Table
+    - kind: float
+      key: suppfig
+      latex-env: suppfig
+      reference-prefix: Figure S
+      space-before-numbering: false
+      latex-list-of-description: Supplementary Figure
 ---
 
 ```{python}
@@ -45,9 +51,13 @@ from matplotlib.ticker import MultipleLocator
 import json
 import sys
 import os
+import pickle
 sys.path.append("code/python")
 from functions import *
 
+#read in parameters for the main analysis 
+with open("data_and_inputs/parameters/params.pkl", "rb") as f:
+    params = pickle.load(f)
 
 ##Read in results from standard decision model 
 HS_state_trace_df_standard_SC = pd.read_csv('results/standard/sc/HS_state.csv')
@@ -89,19 +99,29 @@ LE_gain_NHW_framework = treatment_effect_df_framework.query("race == 'NHW' and c
 
 **Purpose:** Health policy simulation models incorporate disease processes but often ignore social processes that influence health outcomes, potentially leading to suboptimal policy recommendations. To address this gap, we developed a novel decision-analytic modeling framework to integrate social processes.
 
-**Methods:** We evaluated a simplified decision problem using two models: a standard decision-analytic model and a model incorporating our social factors framework. The standard model simulated individuals transitioning through three disease natural history states–healthy, sick, and dead–without accounting for differential health system utilization. Our social factors framework incorporated heterogeneous health insurance coverage, which influenced disease progression and health system utilization. We assessed the impact of a new treatment on a cohort of 100,000 healthy, non-Hispanic Black and non-Hispanic white 40-year-old adults. Main outcomes included life expectancy, cumulative incidence and duration of sickness, and health system utilization over the lifetime. Secondary outcomes included costs, quality-adjusted life years, and incremental cost-effectiveness ratios.
+**Methods:** We evaluated a simplified decision problem using two models: a standard decision-analytic model and a model incorporating our social factors framework. The standard model simulated individuals transitioning through three disease natural history states–healthy, sick, and dead–without accounting for differential health system utilization. Our social factors framework incorporated heterogeneous health insurance coverage, which influenced disease progression and health system utilization. We assessed the impact of a new treatment on a hypothetical cohort of 100,000 healthy, non-Hispanic Black and non-Hispanic white 40-year-old adults. Primary outcomes included life expectancy, cumulative incidence and duration of sickness, and health system utilization throughout a person's lifetime. Secondary outcomes included costs, quality-adjusted life years, and incremental cost-effectiveness ratios.
 
 **Results:** In the standard model, the new treatment increased life expectancy by `{python} round(LE_gain_NHB_standard,1)` years for both non-Hispanic Black and non-Hispanic white adults, without affecting racial/ethnic gaps in life expectancy. However, incorporating known racial/ethnic disparities in health insurance coverage with the social factors framework led to smaller life expectancy gains for non-Hispanic Black adults (`{python} round(LE_gain_NHB_framework,1)` years) compared to non-Hispanic white adults (`{python} round(LE_gain_NHW_framework,1)` years), increasing racial/ethnic disparities in life expectancy.
 
-**Limitations:** The availability of social factors and complexity of causal pathways between factors may pose challenges in applying our social factors framework.
+**Limitations:** The availability of social factors data and complexity of causal pathways between factors may pose challenges in applying our social factors framework.
 
-**Conclusions:** Excluding social processes from health policy modeling can result in unrealistic projections and biased policy recommendations. Incorporating a social factors framework enhances simulation models’ effectiveness in evaluating interventions with health equity implications.
+**Conclusions:** Excluding social processes from health policy modeling can result in unrealistic projections and biased policy recommendations. Incorporating the social factors framework enhances simulation models' effectiveness in evaluating interventions with health equity implications.
+
+## Highlights {.unnumbered}
+
+-   Health policy simulation models that ignore social processes may be biased and lead to suboptimal policy recommendations. To address this, we proposed a novel social factors framework to integrate social factors into decision-analytic models for health policy.
+
+-   Applying our social factors framework to a simplified example highlighted the potential bias that results from ignoring social factors. In a standard model, a hypothetical new treatment appeared to have no effect on health disparities. However, incorporating our social factors framework demonstrated that this treatment would exacerbate disparities.
+
+-   Incorporating a social factors framework into health policy simulation models has particular relevance for evaluating health interventions with equity implications.
 
 ## Introduction
 
-Healthcare policymakers face challenging decisions regarding allocating resources to new or existing interventions subject to constrained budgets. Simulation models can offer rigorous evidence on the long-term health and cost implications of these decisions for populations. [@sanders2016recommendations] Increasingly, policymakers are concerned about how healthcare technologies impact health disparities, which can be examined by assessing the distribution of health outcomes and costs across a population.[@10.1093/acprof:oso/9780190492939.001.0001] However, existing methods may not be sufficient to provide rigorous quantitative evidence on the implications of health disparities.
+Healthcare policymakers face challenging decisions regarding allocating resources to new or existing interventions subject to constrained budgets. Simulation models can offer rigorous evidence on the long-term health and cost implications of these decisions for populations. [@sanders2016recommendations] Increasingly, policymakers are concerned about how healthcare technologies impact health disparities, which can be examined by assessing the distribution of health outcomes and costs across a population.[@10.1093/acprof:oso/9780190492939.001.0001]
 
-Health policy simulation modeling typically focuses on disease natural history to guide policy decisions. However, these models rarely explicitly incorporate the impact of social factors on health outcomes, including patient healthcare access, health-seeking behavior, socioeconomic status, and other structural barriers. Prior research suggests that up to 40% of explainable variation in health outcomes can be attributed to social and economic factors.[@hood2016county] Considering and incorporating these factors into health policy simulation models could be critical for informed decision-making.
+Health policy simulation modeling typically focuses on disease natural history to guide policy decisions. However, these models rarely explicitly incorporate the impact of social factors on health outcomes. The field of social epidemiology has developed frameworks to identify and understand the social drivers of health disparities, including patients' access to healthcare, health-seeking behavior, socioeconomic status, and other structural barriers. [@diderichsen2001social; @solar2010conceptual; @berkman2014social] Prior research suggests that up to 40% of explainable variation in health outcomes can be attributed to social and economic factors. [@hood2016county] Considering and incorporating these factors into health policy simulation models could be critical for informed decision-making.
+
+Existing approaches, such as distributional cost-effectiveness analyses or the use of group-specific model parameters, can estimate the impact of interventions on health disparities. However, these methods alone may be insufficient because they do not include recommendations for how to simulate causal relationships between social factors and health outcomes. We argue that explicitly modeling these relationships in health policy simulation models improves the transparency of model assumptions, strengthens the rigor of quantitative evidence on health equity implications, and enables the evaluation and comparison of both clinical and social interventions.
 
 In this paper, we propose a framework for integrating social factors into health policy decision-analytic models, henceforth referred to as the social factors framework. To demonstrate the value of our framework, we compared model results from a standard model and a model incorporating the social factors framework for a simplified decision problem.
 
@@ -109,31 +129,35 @@ In this paper, we propose a framework for integrating social factors into health
 
 ### Social factors framework
 
-Our social factors framework includes three components: disease natural history, health system utilization, and social factors (@fig-figure1). In disease natural history, individuals transition through health states specific to a given disease. In the health system utilization component, individuals transition between various levels of healthcare engagement, such as having no regular healthcare access, receiving regular care, being diagnosed, receiving treatment, and discontinuing treatment. An individual's disease state can impact their health system utilization. For example, individuals in more advanced disease stages may be more likely to be diagnosed or receive treatment. Additionally, health system utilization can impact disease progression. This can occur when, for instance, individuals receiving treatment may experience slowed disease progression or reduced mortality risk. The third component, social factors, includes health insurance status, socioeconomic status, and additional structural barriers, which may impact both disease natural history and health system utilization.
+Our social factors framework includes three components: disease natural history, health system utilization, and social factors (@fig-figure1). In disease natural history, individuals transition through health states specific to a given disease. In the health system utilization component, individuals transition between various levels of healthcare engagement, such as having no regular healthcare access, receiving regular care, being diagnosed, receiving treatment, and discontinuing treatment. An individual's disease state can impact their health system utilization. For example, individuals in more advanced disease stages may be more likely to be diagnosed or receive treatment. Additionally, health system utilization can impact disease progression. This can occur when, for instance, individuals receiving treatment may experience slowed disease progression or reduced mortality risk. The third modeling component, social factors, includes health insurance status, socioeconomic status, and additional structural barriers that may impact both the natural history of the disease and health system utilization.
 
-![General social factors framework for including social processes in health policy decision-analytic models](figures/proposedframework.png){#fig-figure1}
+![Proposed generalizable social factors framework for including social processes in health policy decision-analytic models](figures/proposedframework.png){#fig-figure1}
 
 ### Simplified decision problem
 
-We compared model results for a simplified decision problem using two state-transition decision-analytic microsimulation models: 1) a standard model; and 2) a model incorporating our social factors framework (@fig-figure2). We selected a microsimulation model, an individual-based state-transition model, for analysis as it allows for differentiated simulation pathways according to individual characteristics. [@krijkamp2018microsimulation]
+We compared model results for a simplified decision problem using two state-transition discrete-time decision-analytic microsimulation models: 1) a standard model and 2) a model incorporating our social factors framework (@fig-figure2). We selected a microsimulation model, an individual-based state-transition model, for analysis as it allows for differentiated simulation pathways according to individual characteristics. [@krijkamp2018microsimulation]
 
-In the standard model, each individual had two characteristics (age and race/ethnicity). As individuals aged, they transitioned through three disease natural history states: healthy, sick, and dead. The standard model incorporated racial and ethnic differences in mortality according to age-sex-race-ethnicity-specific U.S. life table rates. [@arias2023united] We assumed all individuals were in the health system with regular healthcare access, and sick individuals could be detected and treated for disease and subsequently discontinue treatment.
+In the standard model, each individual had two characteristics (age and race/ethnicity). As individuals aged, they transitioned through three disease natural history states: healthy, sick, and dead. The standard model incorporated racial and ethnic differences in mortality using age-sex-race-ethnicity-specific U.S. life table rates. [@arias2023united] We assumed all individuals were in the health system with regular healthcare access and not detected or treated for the disease. Sick individuals could be detected and treated for the disease and subsequently discontinue treatment.
 
 To incorporate the social factors framework, we modified the standard model by adding a social factor, health insurance status. Based on evidence from prior studies, we assumed health insurance status impacted baseline mortality rates and access to regular healthcare.[@wilper2009health; @hill2024health; @fernandez2019medication; @tolbert2024uninsured] We adjusted age-sex-race-ethnicity-specific U.S. life table mortality rates by insurance status assuming a constant race/ethnicity-specific prevalence of uninsured individuals and a hazard ratio for increased mortality risk among those uninsured. [@wilper2009health; @hill2024health]
 
-Insurance status also impacted access to routine healthcare and adherence to treatment. In the model with the social factors framework, we added a health system utilization state, "not in health system," which represented individuals without access to routine healthcare. From the outset, uninsured individuals were less likely to be in the health system with routine access to healthcare compared to those with health insurance coverage. [@fernandez2019medication; @tolbert2024uninsured] Details for estimating these probabilities are provided in @sec-population. Additionally, we assumed that uninsured sick individuals discontinued treatment at faster rates compared to those with insurance. @fig-figure2 provides a visual comparison of the two models and the transition probability dependencies.
+Insurance status also impacted access to routine healthcare and adherence to treatment. In the model with the social factors framework, we added a health system utilization state, "not in health system," which represented individuals without access to routine healthcare. From the outset, uninsured individuals were less likely to be in the health system with routine access to healthcare compared to those with health insurance coverage. [@fernandez2019medication; @tolbert2024uninsured] Details for estimating these probabilities are provided in @sec-population. Individuals not in the health system may enter the health system and gain regular healthcare access over time. Additionally, we assumed that uninsured sick individuals discontinued treatment at faster rates compared to those with insurance. @fig-figure2 provides a visual comparison of the two models and the transition probability dependencies.
 
 ::: column-page
-![Diagrams and transition dependencies for the standard model and social factors framework in the simplified decision problem](figures/simplifiedexample.png){#fig-figure2 width="100%"}
+![Diagrams and transition dependencies for the standard model and social factors framework for the simplified decision problem[^1][^2]](figures/simplifiedexample.png){#fig-figure2 width="100%"}
 :::
+
+[^1]: Individuals in the health system are undetected and untreated for the sickness.
+
+[^2]: In the standard model, all individuals are initiated within the health system.
 
 ### Population and intervention {#sec-population}
 
-We simulated a cohort of 100,000 healthy, non-Hispanic Black and non-Hispanic white 40-year-old men and women. We estimated the sex and racial/ethnic group distribution of the simulated cohort using a cohort of survey participants from the U.S. National Health and Nutrition Survey (NHANES) 2013-2018 data. [@CDC2018] The survey participants were aged between 35 and 45 years, self-identified as either non-Hispanic Black or non-Hispanic white, and self-identified as either female or male.
+We simulated a cohort of 100,000 healthy, non-Hispanic Black and non-Hispanic white 40-year-old men and women. We estimated the sex and racial/ethnic group distribution of the simulated cohort, representative of the U.S. population, using a cohort of survey participants from the U.S. National Health and Nutrition Examination Survey (NHANES) 2013-2018 data. [@CDC2018] The survey participants were aged between 35 and 45 years, self-identified as either non-Hispanic Black or non-Hispanic white, and self-identified as either female or male.
 
-For our social factors framework, we estimated additional quantities: the proportions of adults with health insurance coverage by race/ethnicity and proportions of adults with routine healthcare access by insurance status. Insurance coverage proportions by race/ethnicity were estimated with the fraction of individuals in each racial/ethnic group who responded "yes" to the NHANES survey question "Are you covered by health insurance or some other kind of healthcare plan?" Given the stylized nature of the model, for simplicity, we assumed insurance status remained constant over the lifetime. Routine healthcare access proportions were estimated using the fraction of individuals with and without health insurance coverage who responded "yes" or "there is more than one place" to the NHANES survey question "Is there a place that you usually go when you are sick or you need advice about your health?"
+For our social factors framework, we estimated additional quantities: the proportions of adults with health insurance coverage by race/ethnicity and the proportions of adults with routine healthcare access by insurance status. Insurance coverage proportions by race/ethnicity were estimated with the fraction of individuals in each racial/ethnic group who responded "yes" to the NHANES survey question "Are you covered by health insurance or some other kind of healthcare plan?" Given the stylized nature of the model, for simplicity, we assumed insurance status remained constant over the lifetime. Routine healthcare access proportions were estimated using the fraction of individuals with and without health insurance coverage who responded "yes" or "there is more than one place" to the NHANES survey question, "Is there a place that you usually go when you are sick or you need advice about your health?"
 
-Our simplified decision problem involved evaluating the impact of adding a hypothetical new treatment to standard of care. Without treatment, the sickness increased an individual's mortality rate by a factor of 4 (i.e., a hazard ratio of 4). An existing standard of care treatment halved the mortality rate from sickness. The new treatment eliminated all disease-specific excess mortality, such that patients progressed to death at their baseline mortality rates. Base case model parameters are provided in @tbl-table1.
+Our simplified decision problem involved evaluating the impact of adding a hypothetical new treatment to standard of care. Without treatment, the sickness increased an individual's mortality rate by a factor of 4 (i.e., a hazard ratio of 4). An existing standard of care treatment halved the mortality rate from sickness. The new treatment eliminated disease-specific excess mortality such that patients progressed to death at their baseline mortality rates. Base case model parameters are provided in @tbl-table1. We assumed all parameters were fixed and did not introduce parameter uncertainty.
 
 ```{python}
 #|include: false
@@ -157,49 +181,57 @@ with open("data_and_inputs/nhanes_inputs/place_prop_insured.json", "r") as f:
 |-------------------|------------------|------------------|:-----------------|
 | **Parameter** |  | **Standard Model** | **Social Factors Framework** |
 | *Disease natural history annual transition probabilities* |  |  |  |
-| Healthy [@arias2023united] | Dead | Age-sex-race-ethnicity-specific U.S. life tables | Age-sex-race-ethnicity-insurance-specific U.S. life tables |
-| Healthy | Sick | `{python} pHS` | `{python} pHS` |
-| *Disease natural history transition hazard ratios* |  |  |  |
-| Sick (not detected/treated) | Dead | `{python} float(rr_SD_not_dt)` | `{python} float(rr_SD_not_dt)` |
+| Healthy | Dead | Age-sex-race-ethnicity-specific U.S. life tables [@arias2023united]| Age-sex-race-ethnicity-insurance-specific U.S. life tables [@arias2023united] |
+| Healthy | Sick | `{python} params["pHS"]` | `{python} params["pHS"]` |
+| *Increased mortality risk* |  |  |  |
+| Hazard ratio of death (sick vs. healthy) | | `{python} float(params["rr_SD_not_dt"])` | `{python} float(params["rr_SD_not_dt"])` |
 | *Health system transition annual probabilities* |  |  |  |
-| Out of health system | In health system | `{python} pOI` | `{python} pOI` |
-| In health system | Detected/treated | `{python} f"{pDT:.2f}"` | `{python} f"{pDT:.2f}"` |
-| Detected/treated | Detected/untreated | `{python} pDTUT` | `{python} pDTUT` |
-| *Health system transition hazard ratios (uninsured individuals)* |  |  |  |
-| Out of system | In system |  | `{python} f"{rrOI_no_ins:.2f}"` |
-| In system | Detected/treated |  | `{python} f"{rrDT_no_ins:.2f}"` |
-| Detected/treated | Detected/untreated |  | `{python} rrDTUT_no_ins` |
+| Out of health system | In health system | `{python} params["pOI"]` | `{python} params["pOI"]` |
+| In health system | Detected/treated | `{python} f"{params["pDT"]:.2f}"` | `{python} f"{params["pDT"]:.2f}"` |
+| Detected/treated | Detected/untreated | `{python} params["pDTUT"]` | `{python} params["pDTUT"]` |
+| *Hazard ratios on risk of health system transitions (uninsured vs. insured)* |  |  |  |
+| Out of system | In system |  | `{python} f"{params["rrOI_no_ins"]:.2f}"` |
+| In system | Detected/treated |  | `{python} f"{params["rrDT_no_ins"]:.2f}"` |
+| Detected/treated | Detected/untreated |  | `{python} params["rrDTUT_no_ins"]` |
 | *Treatment effectiveness hazard ratios on mortality* |  |  |  |
-| Standard of care |  | `{python} f"{treatment_HR_SC:.2f}"` | `{python} f"{treatment_HR_SC:.2f}"` |
-| Standard of care and new treatment |  | `{python} f"{treatment_HR_NT:.2f}"` | `{python} f"{treatment_HR_NT:.2f}"` |
+| Standard of care |  | `{python} f"{params["treatment_HR_SC"]:.2f}"` | `{python} f"{params["treatment_HR_SC"]:.2f}"` |
+| Standard of care and new treatment |  | `{python} f"{params["treatment_HR_NT"]:.2f}"` | `{python} f"{params["treatment_HR_NT"]:.2f}"` |
 | *Mortality adjustments by insurance status* |  |  |  |
-| Hazard ratio for increased mortality among uninsured adults [@wilper2009health] |  |  | `{python} HAZARD_RATIO` |
-| Prevalence of uninsured across nonelderly population (0-64y) [@hill2024health] | Non-Hispanic Black |  | `{python} convert_to_percent(NHB_non_insurance_prop)`% |
-|  | Non-Hispanic white |  | `{python} convert_to_percent(NHW_non_insurance_prop)`% |
+| Hazard ratio for increased mortality among uninsured adults |  |  | `{python} params["HAZARD_RATIO"]` [@wilper2009health]|
+| Prevalence of uninsured across nonelderly population (0-64y) | Non-Hispanic Black |  | `{python} convert_to_percent(params["NHB_non_insurance_prop"])`% [@hill2024health]|
+|  | Non-Hispanic white |  | `{python} convert_to_percent(params["NHW_non_insurance_prop"])`% [@hill2024health]|
 | *Cohort characteristics* [@CDC2018] |  |  |  |
-| Sex | Female | `{python} convert_to_percent(female_prop)`% | `{python} convert_to_percent(female_prop)`% |
-|  | Male | `{python} convert_to_percent(1-female_prop)`% | `{python} convert_to_percent(1-female_prop)`% |
-| Race/ethnicity | Non-Hispanic Black | `{python} convert_to_percent(black_prop)`% | `{python} convert_to_percent(black_prop)`% |
-|  | Non-Hispanic white | `{python} convert_to_percent(1-black_prop)`% | `{python} convert_to_percent(1-black_prop)`% |
-| Insurance coverage | Non-Hispanic Black |  | `{python} convert_to_percent(NHB_insured_prop)`% |
-|  | Non-Hispanic white |  | `{python} convert_to_percent(NHW_insured_prop)`% |
-| Has place of routine care | Adults with insurance |  | `{python} convert_to_percent(place_insured_prop)`% |
-|  | Adults without insurance |  | `{python} convert_to_percent(place_uninsured_prop)`% |
+| Sex | Female | `{python} convert_to_percent(female_prop)`% [@CDC2018]| `{python} convert_to_percent(female_prop)`% [@CDC2018]|
+|  | Male | `{python} convert_to_percent(1-female_prop)`% [@CDC2018]| `{python} convert_to_percent(1-female_prop)`% [@CDC2018]|
+| Race/ethnicity | Non-Hispanic Black | `{python} convert_to_percent(black_prop)`% [@CDC2018]| `{python} convert_to_percent(black_prop)`% [@CDC2018]|
+|  | Non-Hispanic white | `{python} convert_to_percent(1-black_prop)`% [@CDC2018]| `{python} convert_to_percent(1-black_prop)`% [@CDC2018]|
+| Insurance coverage | Non-Hispanic Black |  | `{python} convert_to_percent(NHB_insured_prop)`% [@CDC2018]|
+|  | Non-Hispanic white |  | `{python} convert_to_percent(NHW_insured_prop)`% [@CDC2018]|
+| Has place of routine care | Adults with insurance |  | `{python} convert_to_percent(place_insured_prop)`% [@CDC2018]|
+|  | Adults without insurance |  | `{python} convert_to_percent(place_uninsured_prop)`% [@CDC2018]|
 | *Cost-effectiveness analysis parameters* |  |  |  |
-| State-specific quality-of-life weights | Healthy | `{python} QALY_H` | `{python} QALY_H` |
-|  | Sick | `{python} QALY_S` | `{python} QALY_S` |
-| Annual state-specific costs | Healthy | `{python} convert_to_currency(COST_H)` | `{python} convert_to_currency(COST_H)` |
-|  | Sick | `{python} convert_to_currency(COST_S)` | `{python} convert_to_currency(COST_S)` |
-| Annual treatment costs | Standard of care | `{python} convert_to_currency(COST_DT_SC)` | `{python} convert_to_currency(COST_DT_SC)` |
-|  | New treatment | `{python} convert_to_currency(COST_DT_NT)` | `{python} convert_to_currency(COST_DT_NT)` |
+| State-specific quality-of-life weights | Healthy | `{python} params["QALY_mapping"]['H']` | `{python} params["QALY_mapping"]['H']` |
+|  | Sick | `{python} params["QALY_mapping"]['S']` | `{python} params["QALY_mapping"]['S']` |
+| Annual state-specific costs | Healthy | `{python} convert_to_currency(params["COST_mapping"]["H"])` | `{python} convert_to_currency(params["COST_mapping"]["H"])` |
+|  | Sick | `{python} convert_to_currency(params["COST_mapping"]["S"])` | `{python} convert_to_currency(params["COST_mapping"]["S"])` |
+| Annual treatment costs | Standard of care | `{python} convert_to_currency(params["COST_DT_SC"])` | `{python} convert_to_currency(params["COST_DT_SC"])` |
+|  | New treatment | `{python} convert_to_currency(params["COST_DT_NT"])` | `{python} convert_to_currency(params["COST_DT_NT"])` |
 
-: Base case model parameters for standard model and social factors framework {#tbl-table1}
+: Base case model parameters for standard model and social factors framework[^3] {#tbl-table1}
 
-### Outcomes and Analysis
+[^3]: Parameters without citations are assumed parameters. 
 
-Our main analysis focused on health outcomes including life expectancy, cumulative incidence of sickness, years spent in the sick state, cumulative incidence of being diagnosed and treated, and years spent on treatment over the lifetime horizon. For all outcomes, we reported mean estimates and 95% confidence intervals based on the Monte Carlo standard errors (MCSEs) across the standard model and model incorporating our social factors framework.
+### Outcomes and analysis
 
-As a secondary analysis, we conducted an illustrative cost-effectiveness analysis using both models in accordance with the Second Panel on Cost-Effectiveness in Health and Medicine. [@10.1093/acprof:oso/9780190492939.001.0001] @tbl-table1 shows parameters for the illustrative cost-effectiveness analysis. State-specific quality-of-life weights and costs differed by disease natural history states. Treatment costs for the standard of care and the new treatment accrued annually for individuals while they were on treatment. We computed mean and MCSE estimates of discounted quality-adjusted life years (QALYs), costs, and incremental cost-effectiveness ratios (ICERs), all discounted at 3% annually.
+Our main analysis focused on health outcomes including life expectancy, cumulative incidence of sickness, years spent in the sick state, cumulative incidence of being diagnosed and treated, and years spent on treatment over the lifetime horizon. For all outcomes, we reported mean estimates and 95% confidence intervals based on the Monte Carlo standard errors (MCSEs) across the standard model and the model incorporating our social factors framework.
+
+As a secondary analysis, we conducted an illustrative cost-effectiveness analysis using both models from the healthcare sector perspective in accordance with the Second Panel on Cost-Effectiveness in Health and Medicine. [@10.1093/acprof:oso/9780190492939.001.0001] @tbl-table1 shows parameters for the illustrative cost-effectiveness analysis. State-specific quality-of-life weights and costs differed by disease natural history states. Treatment costs for the standard of care and the new treatment accrued annually for individuals while they were on treatment. We computed mean and MCSE estimates of discounted quality-adjusted life years (QALYs), costs, and incremental cost-effectiveness ratios (ICERs), all discounted at 3% annually.
+
+### Sensitivity analysis
+
+We conducted two sensitivity analyses for the simplified decision problem. First, we compared results from the standard model and the model incorporating the social factors framework for an alternative sickness characterized by lower disease prevalence, increased mortality risk, higher costs, and lower associated quality of life. The modified parameters for this scenario are specified in the Supplement (@supptbl-sens-parameters).
+
+Second, using base case model sickness parameters (@tbl-table1), we increased the costs associated with sickness and the new treatment for individuals without health insurance (@supptbl-sens-costs-parameters). This reflects evidence that uninsured individuals have higher out-of-pocket payments.
 
 ## Results
 
@@ -322,9 +354,9 @@ LE_difference_NT_framework = {
 
 #### Life expectancy
 
-Under the standard model, non-Hispanic Black 40-year-old adults receiving the standard of care lived `{python} round(LE_NHB_SC_standard['mean'], ROUND_DIGITS)` years `{python} create_95_CI(LE_NHB_SC_standard)` (@tbl-table2). Non-Hispanic white 40-year-old adults receiving the standard of care on average lived `{python} round(LE_difference_SC_standard['mean'],ROUND_DIGITS)` years `{python} create_95_CI(LE_difference_SC_standard)` longer than non-Hispanic Black adults. With the new treatment, non-Hispanic Black and non-Hispanic white adults gained `{python} round(LE_gain_NHB_standard['mean'],ROUND_DIGITS)` years `{python} create_95_CI(LE_gain_NHB_standard)` and `{python} round(LE_gain_NHW_standard['mean'],ROUND_DIGITS)` years `{python} create_95_CI(LE_gain_NHW_standard)`, respectively. The racial/ethnic disparity in life expectancy did not change.
+Under the standard model, non-Hispanic Black 40-year-old adults receiving the standard of care lived `{python} round(LE_NHB_SC_standard['mean'], ROUND_DIGITS)` years `{python} create_95_CI(LE_NHB_SC_standard)` (@tbl-table2). In comparison, non-Hispanic white 40-year-old adults lived, on average, `{python} round(LE_difference_SC_standard['mean'],ROUND_DIGITS)` years `{python} create_95_CI(LE_difference_SC_standard)` longer than non-Hispanic Black adults. Adding the new treatment increased average life expectancy for both non-Hispanic Black and non-Hispanic white adults by `{python} round(LE_gain_NHB_standard['mean'],ROUND_DIGITS)` years, resulting in no changes to the racial/ethnic disparity in life expectancy.
 
-Using the social factors framework, the racial/ethnic disparity in life expectancy under the standard of care was `{python} round(LE_difference_SC_framework['mean'] - LE_difference_SC_standard['mean'],ROUND_DIGITS)` years greater than the standard model at `{python} round(LE_difference_SC_framework['mean'],ROUND_DIGITS)` years `{python} create_95_CI(LE_difference_SC_framework,ROUND_DIGITS)`, after accounting for differences in baseline health insurance coverage. In addition, life expectancy gains from the new treatment were smaller with the social factors framework compared to the standard model. Non-Hispanic Black adults and non-Hispanic white adults gained `{python} round(LE_gain_NHB_standard['mean'] - LE_gain_NHB_framework['mean'],ROUND_DIGITS)` fewer years at `{python} round(LE_gain_NHB_framework['mean'],ROUND_DIGITS)` years `{python} create_95_CI(LE_gain_NHB_framework)` and `{python} round(LE_gain_NHW_standard['mean'] - LE_gain_NHW_framework['mean'], ROUND_DIGITS)` fewer years at `{python} round(LE_gain_NHW_framework['mean'],ROUND_DIGITS)` years `{python} create_95_CI(LE_gain_NHW_framework)`, respectively, compared to the standard model. With the social factors framework, adding the new treatment to the standard of care led to an increase in the racial/ethnic disparity in life expectancy between non-Hispanic Black and non-Hispanic white adults by `{python} round(LE_difference_NT_framework['mean'] - LE_difference_SC_framework['mean'],ROUND_DIGITS)` years to `{python} round(LE_difference_NT_framework['mean'],ROUND_DIGITS)` years `{python} create_95_CI(LE_difference_NT_framework)`.
+Using the social factors framework, which accounts for differences in baseline health insurance coverage,  the racial/ethnic disparity in life expectancy under the standard of care was `{python} round(LE_difference_SC_framework['mean'] - LE_difference_SC_standard['mean'],ROUND_DIGITS)` years greater than in the standard model. Life expectancy gains from the new treatment were also smaller. This effect was more pronounced for non-Hispanic Black adults who gained `{python} round(LE_gain_NHB_framework['mean'],ROUND_DIGITS)` years `{python} create_95_CI(LE_gain_NHB_framework)`, compared with `{python} round(LE_gain_NHW_framework['mean'],ROUND_DIGITS)` years `{python} create_95_CI(LE_gain_NHW_framework)` for non-Hispanic white adults. With the social factors framework, adding the new treatment to the standard of care widened the racial/ethnic disparity in life expectancy between non-Hispanic Black and non-Hispanic white adults by `{python} round(LE_difference_NT_framework['mean'] - LE_difference_SC_framework['mean'],ROUND_DIGITS)` years.
 
 ```{python}
 #|include: false
@@ -475,9 +507,11 @@ sick_LY_diff_NT_framework = {
 
 #### Cumulative incidence of sickness
 
-The lifetime cumulative incidence of sickness was `{python} convert_to_percent(sick_NHB_SC_standard['mean'])`% `{python} create_95_CI_percents(sick_NHB_SC_standard)` and `{python} convert_to_percent(sick_NHW_SC_standard['mean'])`% `{python} create_95_CI_percents(sick_NHW_SC_standard)` for non-Hispanic Black and non-Hispanic white adults, respectively, with the standard of care in the standard model. Because individuals with sickness cannot be cured, gains in number of years spent sick were years successfully managing and surviving the disease. When receiving the standard of care, non-Hispanic Black adults spent on average `{python} round(sick_LY_NHB_SC_standard['mean'],ROUND_DIGITS)` years sick `{python} create_95_CI(sick_LY_NHB_SC_standard)`, with an increase of `{python} round(sick_LY_NHB_gain_standard['mean'],ROUND_DIGITS)` years `{python} create_95_CI(sick_LY_NHB_gain_standard)` when receiving the new treatment. Non-Hispanic white adults spent `{python} round(sick_LY_NHW_SC_standard['mean'],ROUND_DIGITS)` years sick `{python} create_95_CI(sick_LY_NHW_SC_standard)` on average, with an increase of `{python} round(sick_LY_NHW_gain_standard['mean'],ROUND_DIGITS)` years `{python} create_95_CI(sick_LY_NHW_gain_standard)` from the new treatment. The racial/ethnic difference in average years spent sick narrowed between non-Hispanic Black and non-Hispanic white adults from `{python} round(sick_LY_diff_SC_standard['mean'],ROUND_DIGITS)` years sick `{python} create_95_CI(sick_LY_diff_SC_standard)` to `{python} round(sick_LY_diff_NT_standard['mean'],ROUND_DIGITS)` years sick `{python} create_95_CI(sick_LY_diff_NT_standard)`.
+The lifetime cumulative incidence of sickness was `{python} convert_to_percent(sick_NHB_SC_standard['mean'])`% `{python} create_95_CI_percents(sick_NHB_SC_standard)` and `{python} convert_to_percent(sick_NHW_SC_standard['mean'])`% `{python} create_95_CI_percents(sick_NHW_SC_standard)` for non-Hispanic Black and non-Hispanic white adults, respectively, with the standard of care in the standard model. Because individuals with sickness cannot be cured, gains in the number of years spent sick were years of successful management and survival of the disease. With the new treatment added to standard of care, non-Hispanic Black adults spent an additional 
+`{python} round(sick_LY_NHB_gain_standard['mean'],ROUND_DIGITS)` years sick `{python} create_95_CI(sick_LY_NHB_gain_standard)`, compared with `{python} round(sick_LY_NHW_gain_standard['mean'],ROUND_DIGITS)` years `{python} create_95_CI(sick_LY_NHW_gain_standard)` for non-Hispanic white adults. The racial/ethnic difference in years spent sick narrowed between non-Hispanic Black adults and non-Hispanic white adults by `{python} round(sick_LY_diff_SC_standard['mean'] - sick_LY_diff_NT_standard['mean'],ROUND_DIGITS)` years.
 
-In the social factors framework, the lifetime cumulative incidence of sickness was `{python} convert_to_percent(sick_NHB_SC_framework['mean'])`% `{python} create_95_CI_percents(sick_NHB_SC_framework)` and `{python} convert_to_percent(sick_NHW_SC_framework['mean'])`% `{python} create_95_CI_percents(sick_NHW_SC_framework)` for non-Hispanic Black and non-Hispanic white adults, respectively. Compared to the standard model, the average gain in the number of years spent sick was lower for both groups: non-Hispanic Black adults gained `{python} round(sick_LY_NHB_gain_standard['mean'] - sick_LY_NHB_gain_framework['mean'],ROUND_DIGITS)` fewer years sick at `{python} round(sick_LY_NHB_gain_framework['mean'],ROUND_DIGITS)` years `{python} create_95_CI(sick_LY_NHB_gain_framework)`, and non-Hispanic white adults gained `{python} round(sick_LY_NHW_gain_standard['mean'] - sick_LY_NHW_gain_framework['mean'],ROUND_DIGITS)` fewer years sick at `{python} round(sick_LY_NHW_gain_framework['mean'],ROUND_DIGITS)` years sick `{python} create_95_CI(sick_LY_NHW_gain_framework)`. The racial/ethnic difference in the average number of years spent sick increased with the new treatment by `{python} round(sick_LY_diff_NT_framework['mean'] - sick_LY_diff_SC_framework['mean'],ROUND_DIGITS)` years to `{python} round(sick_LY_diff_NT_framework['mean'],ROUND_DIGITS)` years sick `{python} create_95_CI(sick_LY_diff_NT_framework)`.
+
+In the social factors framework, the lifetime cumulative incidence of sickness was `{python} convert_to_percent(sick_NHB_SC_framework['mean'])`% `{python} create_95_CI_percents(sick_NHB_SC_framework)` and `{python} convert_to_percent(sick_NHW_SC_framework['mean'])`% `{python} create_95_CI_percents(sick_NHW_SC_framework)` for non-Hispanic Black and non-Hispanic white adults, respectively. Compared to the standard model, the average gain in the number of years spent sick was lower for both groups: non-Hispanic Black adults gained `{python} round(sick_LY_NHB_gain_standard['mean'] - sick_LY_NHB_gain_framework['mean'],ROUND_DIGITS)` fewer years sick, and non-Hispanic white adults gained `{python} round(sick_LY_NHW_gain_standard['mean'] - sick_LY_NHW_gain_framework['mean'],ROUND_DIGITS)` fewer years sick. The racial/ethnic difference in the average number of years spent sick increased by `{python} round(sick_LY_diff_NT_framework['mean'] - sick_LY_diff_SC_framework['mean'],ROUND_DIGITS)` years with the new treatment.
 
 ```{python}
 #|include: false
@@ -535,7 +569,7 @@ NHW_sick_treated_percent = NHW_sick_treated['mean']/sick_LY_NHW_NT_standard['mea
 
 #racial/ethnic difference in number of years sick on treatment under the standard of care            
 sick_treated_LY_diff_SC_standard = {"mean": NHW_sick_SC_treated['mean'] - NHB_sick_SC_treated['mean'], "se": combine_se_errors(NHB_sick_SC_treated['se'],          NHB_sick_SC_treated['se'])}
-                                                                           #racial/ethnic difference in number of years sick on treatment under the new treatment    
+#racial/ethnic difference in number of years sick on treatment under the new treatment    
 sick_treated_LY_diff_NT_standard = {"mean": NHW_sick_treated['mean'] - NHB_sick_treated['mean'], "se": combine_se_errors(NHB_sick_treated['se'], NHW_sick_treated['se'])}
 
 ##SOCIAL FACTORS FRAMEWORK
@@ -602,39 +636,46 @@ sick_treated_LY_diff_NT_framework = {"mean" : NHW_sick_treated_framework['mean']
 
 ```
 
-| Parameter | Group | Standard Model |   | Social Factors Framework |   |
-|------------|------------|------------|------------|------------|------------|
-|  |  | *Standard of Care* | *New Treatment* | *Standard of Care* | *New Treatment* |
-| Life expectancy in years | Non-Hispanic Black | `{python} format_value_and_se(LE_NHB_SC_standard)` | `{python} format_value_and_se(LE_NHB_NT_standard)` | `{python} format_value_and_se(LE_NHB_SC_framework)` | `{python} format_value_and_se(LE_NHB_NT_framework)` |
-|  | Non-Hispanic white | `{python} format_value_and_se(LE_NHW_SC_standard)` | `{python} format_value_and_se(LE_NHW_NT_standard)` | `{python} format_value_and_se(LE_NHW_SC_framework)` | `{python} format_value_and_se(LE_NHW_NT_framework)` |
-|  | Difference between groups | `{python} format_value_and_se(LE_difference_SC_standard)` | `{python} format_value_and_se(LE_difference_NT_standard)` | `{python} format_value_and_se(LE_difference_SC_framework)` | `{python} format_value_and_se(LE_difference_NT_framework)` |
-| Cumulative incidence of sickness | Non-Hispanic Black | `{python} format_percent(sick_NHB_SC_standard)` | `{python} format_percent(sick_NHB_NT_standard)` | `{python} format_percent(sick_NHB_SC_framework)` | `{python} format_percent(sick_NHB_NT_framework)` |
-|  | Non-Hispanic white | `{python} format_percent(sick_NHW_SC_standard)` | `{python} format_percent(sick_NHW_NT_standard)` | `{python} format_percent(sick_NHW_SC_framework)` | `{python} format_percent(sick_NHW_NT_framework)` |
-|  | Difference between groups | `{python} format_percent(sick_diff_SC_standard)` | `{python} format_percent(sick_diff_NT_standard)` | `{python} format_percent(sick_diff_SC_framework)` | `{python} format_percent(sick_diff_NT_framework)` |
-| Years spent with sickness | Non-Hispanic Black | `{python} format_value_and_se(sick_LY_NHB_SC_standard)` | `{python} format_value_and_se(sick_LY_NHB_NT_standard)` | `{python} format_value_and_se(sick_LY_NHB_SC_framework)` | `{python} format_value_and_se(sick_LY_NHB_NT_framework)` |
-|  | Non-Hispanic white | `{python} format_value_and_se(sick_LY_NHW_SC_standard)` | `{python} format_value_and_se(sick_LY_NHW_NT_standard)` | `{python} format_value_and_se(sick_LY_NHW_SC_framework)` | `{python} format_value_and_se(sick_LY_NHW_NT_framework)` |
-|  | Difference between groups | `{python} format_value_and_se(sick_LY_diff_SC_standard)` | `{python} format_value_and_se(sick_LY_diff_NT_standard)` | `{python} format_value_and_se(sick_LY_diff_SC_framework)` | `{python} format_value_and_se(sick_LY_diff_NT_framework)` |
-| Cumulative incidence of detected/treated | Non-Hispanic Black | `{python} format_percent(NHB_treated_SC)` | `{python} format_percent(NHB_treated_NT)` | `{python} format_percent(NHB_treated_framework_SC)` | `{python} format_percent(NHB_treated_framework_NT)` |
-|  | Non-Hispanic white | `{python} format_percent(NHW_treated_SC)` | `{python} format_percent(NHW_treated_NT)` | `{python} format_percent(NHW_treated_framework_SC)` | `{python} format_percent(NHW_treated_framework_NT)` |
-|  | Difference between groups | `{python} format_percent(sick_treated_diff_SC_standard)` | `{python} format_percent(sick_treated_diff_NT_standard)` | `{python} format_percent(sick_treated_diff_SC_framework)` | `{python} format_percent(sick_treated_diff_NT_framework)` |
-| Years spent on treatment while sick | Non-Hispanic Black | `{python} format_value_and_se(NHB_sick_SC_treated)` | `{python} format_value_and_se(NHB_sick_treated)` | `{python} format_value_and_se(NHB_sick_SC_treated_framework)` | `{python} format_value_and_se(NHB_sick_treated_framework)` |
-|  | Non-Hispanic white | `{python} format_value_and_se(NHW_sick_SC_treated)` | `{python} format_value_and_se(NHW_sick_treated)` | `{python} format_value_and_se(NHW_sick_SC_treated_framework)` | `{python} format_value_and_se(NHW_sick_treated_framework)` |
-|  | Difference between groups | `{python} format_value_and_se(sick_treated_LY_diff_SC_standard)` | `{python} format_value_and_se(sick_treated_LY_diff_NT_standard)` | `{python} format_value_and_se(sick_treated_LY_diff_SC_framework)` | `{python} format_value_and_se(sick_treated_LY_diff_NT_framework)` |
+```{python}
+#| echo: false
+#| label: tbl-table2
+#| tbl-cap: Health outcomes results for standard model and social factors framework (Means \[MCSEs\]) 
 
-: Health outcomes results for standard model and social factors framework (Means \[MCSEs\]) {#tbl-table2}
+from great_tables import GT, loc, style
+example_table = create_main_outcomes_table(total_trace_standard, total_trace_framework)
+gt_ex = (
+    GT(example_table)
+    .tab_options(
+        table_background_color='white',
+        table_body_hlines_style="none",
+        table_body_vlines_style="none",
+        row_striping_include_table_body=False,
+        quarto_disable_processing=True
+    )
+    .tab_style(
+    style=style.text(style="italic"),
+    locations=loc.body(rows=0))
+    .tab_style(
+        style=style.text(weight="bold"),
+        locations=loc.column_labels()
+    )
+)
+gt_ex
+```
 
 ### Health system utilization {#sec-healthsystem}
 
-All individuals started in the health system with regular healthcare and were eligible for detection and treatment for sickness in the standard model. The cumulative lifetime incidence of being detected and treated when receiving the new treatment was `{python} convert_to_percent(overall_treated['mean'])`% `{python} create_95_CI_percents(overall_treated)` across the cohort, with `{python} convert_to_percent(NHB_treated_NT['mean'])`% `{python} create_95_CI_percents(NHB_treated_NT)` and `{python} convert_to_percent(NHW_treated_NT['mean'])`% `{python} create_95_CI_percents(NHW_treated_NT)` for non-Hispanic Black and non-Hispanic white adults, respectively. When receiving the new treatment, non-Hispanic Black adults and non-Hispanic white adults spent `{python} round(NHB_sick_treated['mean'],ROUND_DIGITS)` years sick `{python} create_95_CI(NHB_sick_treated)` and `{python} round(NHW_sick_treated['mean'],ROUND_DIGITS)` years sick `{python} create_95_CI(NHW_sick_treated)` on treatment. Adults from both racial/ethnic groups spent on average `{python} convert_to_percent(NHB_sick_treated_percent)`% of their sick years on the new treatment.
+All individuals started in the health system with regular healthcare and were eligible for detection and treatment for sickness in the standard model. The cumulative lifetime incidence of being detected and treated when receiving the new treatment was `{python} convert_to_percent(overall_treated['mean'])`% `{python} create_95_CI_percents(overall_treated)` across the cohort, with `{python} convert_to_percent(NHB_treated_NT['mean'])`% `{python} create_95_CI_percents(NHB_treated_NT)` and `{python} convert_to_percent(NHW_treated_NT['mean'])`% `{python} create_95_CI_percents(NHW_treated_NT)` for non-Hispanic Black and non-Hispanic white adults, respectively. When receiving the new treatment, non-Hispanic Black adults and non-Hispanic white adults both spent on average `{python} convert_to_percent(NHB_sick_treated_percent)`% of their sick years on the new treatment.
 
-For the social factors framework, `{python} convert_to_percent(out_of_system_framework)`% of individuals started out of the health system. Therefore, the cumulative lifetime incidence of being detected and treated was lower than the standard model by `{python} convert_to_percent(overall_treated['mean'] - overall_treated_framework['mean'])`% at `{python} convert_to_percent(overall_treated_framework['mean'])`% `{python} create_95_CI_percents(overall_treated_framework)` (@fig-health-utilization-1). Incidence of being detected and treated was `{python} convert_to_percent(NHB_treated_NT['mean'] - NHB_treated_framework_NT['mean'])`% and `{python} convert_to_percent(NHW_treated_NT['mean'] - NHW_treated_framework_NT['mean'])`% lower compared to the standard model for non-Hispanic Black and non-Hispanic white adults, respectively. These differences were driven by differences in health insurance coverage, which influenced transitions into the health system and access to treatment. Individuals with insurance had a higher cumulative incidence of being detected and treated at `{python} convert_to_percent(insured_treated_percent['mean'])`% `{python} create_95_CI_percents(insured_treated_percent)` throughout their lifetime, thus benefiting from the new treatment, compared to individuals without insurance at `{python} convert_to_percent(uninsured_treated_percent['mean'])`% `{python} create_95_CI_percents(uninsured_treated_percent)` (@fig-health-utilization-2).
+For the social factors framework, `{python} convert_to_percent(out_of_system_framework)`% of individuals started outside of the health system. Therefore, the cumulative lifetime incidence of being detected and treated was lower than that of the standard model by `{python} convert_to_percent(overall_treated['mean'] - overall_treated_framework['mean'])`% at `{python} convert_to_percent(overall_treated_framework['mean'])`% `{python} create_95_CI_percents(overall_treated_framework)` (@fig-health-utilization-1). The incidence of being detected and treated was `{python} convert_to_percent(NHB_treated_NT['mean'] - NHB_treated_framework_NT['mean'])`% and `{python} convert_to_percent(NHW_treated_NT['mean'] - NHW_treated_framework_NT['mean'])`% lower compared to the standard model for non-Hispanic Black and non-Hispanic white adults, respectively. These differences were driven by differences in health insurance coverage, which influenced transitions into the health system and access to treatment (@suppfig-health-utilization-race). Individuals with insurance had a higher cumulative incidence of being detected and treated at `{python} convert_to_percent(insured_treated_percent['mean'])`% `{python} create_95_CI_percents(insured_treated_percent)` throughout their lifetime, thus benefiting more from the new treatment, compared to individuals without insurance at `{python} convert_to_percent(uninsured_treated_percent['mean'])`% `{python} create_95_CI_percents(uninsured_treated_percent)` (@fig-health-utilization-2).
 
-Additionally, non-Hispanic Black adults and non-Hispanic white adults spent a lower percentage of their sick years on the new treatment in the social factors framework implementation compared to the standard model. Non-Hispanic Black and non-Hispanic white adults spent `{python} round(NHB_sick_treated_framework['mean'],ROUND_DIGITS)` years `{python} create_95_CI(NHB_sick_treated_framework)` and `{python} round(NHW_sick_treated_framework['mean'],ROUND_DIGITS)` years `{python} create_95_CI(NHW_sick_treated_framework)` on treatment, or `{python} convert_to_percent(NHB_sick_treated_framework_percent)`% and `{python} convert_to_percent(NHW_sick_treated_framework_percent)`% of their years sick, respectively. After accounting for heterogeneity in health insurance coverage with the social factors framework, non-Hispanic white patients spent a greater proportion of sick years on the new treatment (`{python} convert_to_percent(NHW_sick_treated_framework_percent -NHB_sick_treated_framework_percent)` percentage points) compared to non-Hispanic Black adults.
+Additionally, non-Hispanic Black adults and non-Hispanic white adults spent a lower percentage of their sick years on the new treatment in the social factors framework implementation compared to the standard model. Non-Hispanic Black and non-Hispanic white adults spent `{python} convert_to_percent(NHB_sick_treated_framework_percent)`% and `{python} convert_to_percent(NHW_sick_treated_framework_percent)`% of their years sick on treatment, respectively. After accounting for heterogeneity in health insurance coverage with the social factors framework, non-Hispanic white patients spent a greater proportion of sick years on the new treatment (`{python} convert_to_percent(NHW_sick_treated_framework_percent -NHB_sick_treated_framework_percent)` percentage points) compared to non-Hispanic Black adults.
+
 
 ```{python}
 #| label: fig-health-utilization
 #| echo: false
-#| fig-cap: Prevalence of health system utilization states
+#| fig-cap: Model trace of simulated cohort across health system utilization states over 60 years 
 #| layout-nrow: 2
 #| fig-subcap: 
 #|   - "Comparison between standard model and social factors framework"
@@ -889,9 +930,9 @@ QALY_diff_NHW_standard_framework = {"mean": QALY_gain_NHW_standard['mean'] - QAL
 
 ```
 
-Lastly, we summarize differences in our cost-effectiveness analyses. Discounted expected lifetime healthcare costs when receiving the standard of care in the standard model were `{python} convert_to_currency(Cost_NHB_SC_standard['mean'])` `{python} create_95_CI_costs(Cost_NHB_SC_standard)` for a 40-year-old non-Hispanic Black adult (@supptbl-cost-qaly). Adding the new treatment, which cost `{python} convert_to_currency(COST_DT_NT)` per year, increased expected lifetime healthcare costs by `{python} convert_to_currency(Cost_gain_NHB_standard['mean'])` `{python} create_95_CI_costs(Cost_gain_NHB_standard)`. The new treatment yielded QALY gains of `{python} round(QALY_gain_NHB_standard['mean'],ROUND_DIGITS)` `{python} create_95_CI(QALY_gain_NHB_standard)` compared to standard of care. For non-Hispanic white adults, discounted expected lifetime costs when receiving the standard of care were `{python} convert_to_currency(Cost_NHW_SC_standard['mean'])` `{python} create_95_CI_costs(Cost_NHW_SC_standard)`. Adding the new treatment increased discounted lifetime healthcare costs by `{python} convert_to_currency(Cost_gain_NHW_standard['mean'])` `{python} create_95_CI_costs(Cost_gain_NHW_standard)` and QALYs by `{python} round(QALY_gain_NHW_standard['mean'],ROUND_DIGITS)` `{python} create_95_CI(QALY_gain_NHW_standard)`. The ICER for adding the new treatment was higher for non-Hispanic white adults (`{python} convert_to_currency(ICER_NHW_standard)` per QALY gained) compared to non-Hispanic Black adults (`{python} convert_to_currency(ICER_NHB_standard)` per QALY gained) (@supptbl-NHW-CEA, @supptbl-NHB-CEA).
+Herein, we summarize differences in our cost-effectiveness analyses. Discounted expected lifetime healthcare costs when receiving the standard of care in the standard model were `{python} convert_to_currency(Cost_NHB_SC_standard['mean'])` `{python} create_95_CI_costs(Cost_NHB_SC_standard)` for a 40-year-old non-Hispanic Black adult (@supptbl-cost-qaly). Adding the new treatment, which costs `{python} convert_to_currency(params["COST_DT_NT"])` per year, increased lifetime healthcare costs by `{python} convert_to_currency(Cost_gain_NHB_standard['mean'])` and yielded an average gain of `{python} round(QALY_gain_NHB_standard['mean'],ROUND_DIGITS)` QALYs compared to standard of care. For non-Hispanic white adults, adding the new treatment led to a larger cost increase (`{python} convert_to_currency(Cost_NHW_SC_standard['mean'])`) and smaller QALYs gains (`{python} round(QALY_gain_NHW_standard['mean'],ROUND_DIGITS)`) compared to non-Hispanic Black adults. As a result, the ICER for adding the new treatment was higher for non-Hispanic white adults (`{python} convert_to_currency(ICER_NHW_standard)` per QALY gained) compared to non-Hispanic Black adults (`{python} convert_to_currency(ICER_NHB_standard)` per QALY gained) (@supptbl-NHW-CEA, @supptbl-NHB-CEA).
 
-The new treatment resulted in lower QALY gains and healthcare cost increases in the social factors framework due to reduced access to treatment, as observed in @sec-healthsystem. These changes were more pronounced for non-Hispanic Black adults, who had lower health insurance coverage compared to non-Hispanic white adults (@fig-cost-effectiveness). For non-Hispanic Black adults, lifetime healthcare costs increased by `{python} convert_to_currency(Cost_gain_NHB_framework['mean'])` `{python} create_95_CI_costs(Cost_gain_NHB_framework)` with the new treatment, on average `{python} convert_to_currency(Cost_diff_NHB_standard_framework['mean'])` `{python} create_95_CI_costs(Cost_diff_NHB_standard_framework)` less than computed in the standard model. QALY gains using the social factors framework were also `{python} round(QALY_diff_NHB_standard_framework['mean'],ROUND_DIGITS)` smaller `{python} create_95_CI(QALY_diff_NHB_standard_framework)` at `{python} round(QALY_gain_NHB_framework['mean'],ROUND_DIGITS)` `{python} create_95_CI(QALY_gain_NHB_framework)`. For non-Hispanic white adults, the new treatment increased lifetime healthcare costs and QALYs by `{python} convert_to_currency(Cost_gain_NHW_framework['mean'])` `{python} create_95_CI_costs(Cost_gain_NHW_framework)` and `{python} round(QALY_gain_NHW_framework['mean'],ROUND_DIGITS)` `{python} create_95_CI(QALY_gain_NHW_framework)`, respectively, `{python} convert_to_currency(Cost_diff_NHW_standard_framework['mean'])` fewer dollars spent `{python} create_95_CI_costs(Cost_diff_NHW_standard_framework)` and `{python} round(QALY_diff_NHW_standard_framework['mean'],ROUND_DIGITS)` fewer QALYs `{python} create_95_CI(QALY_diff_NHW_standard_framework)` than in the standard model.
+The new treatment resulted in lower QALY gains and healthcare cost increases in the social factors framework due to reduced access to treatment, as observed in @sec-healthsystem. These changes were more pronounced for non-Hispanic Black adults, who had lower health insurance coverage compared to non-Hispanic white adults (@fig-cost-effectiveness). For non-Hispanic Black adults, the lifetime healthcare costs and QALYs increased by `{python} convert_to_currency(Cost_gain_NHB_framework['mean'])` and `{python} round(QALY_gain_NHB_framework['mean'],ROUND_DIGITS)`, which were `{python} convert_to_currency(Cost_diff_NHB_standard_framework['mean'])` and `{python} round(QALY_diff_NHB_standard_framework['mean'],ROUND_DIGITS)` lower than when computed in the standard model. For non-Hispanic white adults, the new treatment resulted in `{python} convert_to_currency(Cost_diff_NHW_standard_framework['mean'])` less in additional healthcare costs and `{python} round(QALY_diff_NHW_standard_framework['mean'],ROUND_DIGITS)` fewer QALYs compared with the standard model.
 
 The ICERs for adding the new treatment were less favorable when using the social factors framework compared to the standard model. Adding the new treatment cost `{python} convert_to_currency(ICER_NHB_framework)` and `{python} convert_to_currency(ICER_NHW_framework)` per QALY gained for non-Hispanic Black and non-Hispanic white adults, respectively, on average `{python} convert_to_currency(ICER_NHB_framework - ICER_NHB_standard)` and `{python} convert_to_currency(ICER_NHW_framework - ICER_NHW_standard)` higher than in the standard model. ICERs for adding the new treatment were consistently lower for non-Hispanic Black adults compared to non-Hispanic white adults across both models.
 
@@ -971,19 +1012,140 @@ plt.show()
 
 ```
 
+### Sensitivity analysis
+
+```{python}
+#|include: false
+
+#SENSITIVITY ANALYSIS 1: different disease
+
+##Read in results from standard decision model 
+total_trace_standard_SC_sens_1 = pd.read_csv('results/sensitivity/disease/standard/sc/total_trace.csv')
+total_trace_standard_NT_sens_1 = pd.read_csv('results/sensitivity/disease/standard/nt/total_trace.csv')
+total_trace_standard_SC_sens_1['treatment_type'] = ['Standard of Care' for i in range(len(total_trace_standard_SC_sens_1))]
+total_trace_standard_NT_sens_1['treatment_type'] = ['New Treatment' for i in range(len(total_trace_standard_NT_sens_1))]
+total_trace_standard_sens_1 = pd.concat([total_trace_standard_SC_sens_1, total_trace_standard_NT_sens_1], axis = 0)
+
+#Read in results from model with social factors framework
+total_trace_framework_SC_sens_1 = pd.read_csv('results/sensitivity/disease/framework/sc/total_trace.csv')
+total_trace_framework_NT_sens_1 = pd.read_csv('results/sensitivity/disease/framework/nt/total_trace.csv')
+total_trace_framework_SC_sens_1['treatment_type'] = ['Standard of Care' for i in range(len(total_trace_framework_SC_sens_1))]
+total_trace_framework_NT_sens_1['treatment_type'] = ['New Treatment' for i in range(len(total_trace_framework_NT_sens_1))]
+total_trace_framework_sens_1 = pd.concat([total_trace_framework_SC_sens_1, total_trace_framework_NT_sens_1], axis = 0)
+
+treatment_effect_df_framework_sens_1 = create_treatment_effect(total_trace_framework_sens_1)
+treatment_effect_df_standard_sens_1 = create_treatment_effect(total_trace_standard_sens_1)
+
+### STANDARD MODEL (New treatment)
+
+## Non-Hispanic Black cumulative incidence of sickness 
+sick_NHB_NT_standard_sens_1 = {
+    "mean": treatment_effect_df_standard_sens_1.query("race == 'NHB' and column == 'was_sick'")['NT mean'].iloc[0],
+    "se": treatment_effect_df_standard_sens_1.query("race == 'NHB' and column == 'was_sick'")['NT se'].iloc[0]
+}
+## Non-Hispanic White cumulative incidence of sickness 
+sick_NHW_NT_standard_sens_1 = {
+    "mean": treatment_effect_df_standard_sens_1.query("race == 'NHW' and column == 'was_sick'")['NT mean'].iloc[0],
+    "se": treatment_effect_df_standard_sens_1.query("race == 'NHW' and column == 'was_sick'")['NT se'].iloc[0]
+}
+
+#Non-Hispanic Black years sick
+sick_LY_NHB_NT_standard_sens_1 = {
+    "mean": treatment_effect_df_standard_sens_1.query("race == 'NHB' and column == 'years_sick'")['NT mean'].iloc[0],
+    "se": treatment_effect_df_standard_sens_1.query("race == 'NHB' and column == 'years_sick'")['NT se'].iloc[0]
+}
+
+#Non-Hispanic Black years sick and treated 
+NHB_sick_treated_sens_1 = {"mean": treatment_effect_df_standard_sens_1.query("race == 'NHB' and column == 'years_sick_treated'")['NT mean'].iloc[0], 
+                   "se": treatment_effect_df_standard_sens_1.query("race == 'NHB' and column == 'years_sick_treated'")['NT se'].iloc[0]}
+
+#percent of sick years on treatment 
+NHB_sick_treated_percent_sens_1 = NHB_sick_treated_sens_1['mean']/sick_LY_NHB_NT_standard_sens_1['mean']
+
+#Non-Hispanic white years sick
+sick_LY_NHW_NT_standard_sens_1 = {
+    "mean": treatment_effect_df_standard_sens_1.query("race == 'NHW' and column == 'years_sick'")['NT mean'].iloc[0],
+    "se": treatment_effect_df_standard_sens_1.query("race == 'NHW' and column == 'years_sick'")['NT se'].iloc[0]
+}
+
+#Non-Hispanic white years sick and treated 
+NHW_sick_treated_sens_1 = {"mean": treatment_effect_df_standard_sens_1.query("race == 'NHW' and column == 'years_sick_treated'")['NT mean'].iloc[0], 
+                   "se": treatment_effect_df_standard_sens_1.query("race == 'NHW' and column == 'years_sick_treated'")['NT se'].iloc[0]}
+
+#percent of sick years on treatment 
+NHW_sick_treated_percent_sens_1 = NHW_sick_treated_sens_1['mean']/sick_LY_NHW_NT_standard_sens_1['mean']
+
+### SOCIAL FACTORS FRAMEWORK 
+
+#Non-Hispanic Black years sick
+sick_LY_NHB_SC_framework_sens_1 = {
+    "mean": treatment_effect_df_framework_sens_1.query("race == 'NHB' and column == 'years_sick'")['SC mean'].iloc[0],
+    "se": treatment_effect_df_framework_sens_1.query("race == 'NHB' and column == 'years_sick'")['SC se'].iloc[0]
+}
+
+#Non-Hispanic Black years sick
+sick_LY_NHB_NT_framework_sens_1 = {
+    "mean": treatment_effect_df_framework_sens_1.query("race == 'NHB' and column == 'years_sick'")['NT mean'].iloc[0],
+    "se": treatment_effect_df_framework_sens_1.query("race == 'NHB' and column == 'years_sick'")['NT se'].iloc[0]
+}
+
+#Non-Hispanic Black years sick and treated 
+NHB_sick_treated_framework_sens_1 = {"mean": treatment_effect_df_framework_sens_1.query("race == 'NHB' and column == 'years_sick_treated'")['NT mean'].iloc[0], 
+                   "se": treatment_effect_df_framework_sens_1.query("race == 'NHB' and column == 'years_sick_treated'")['NT se'].iloc[0]}
+
+#percent of sick years on treatment 
+NHB_sick_treated_percent_framework_sens_1 = NHB_sick_treated_framework_sens_1['mean']/sick_LY_NHB_NT_framework_sens_1['mean']
+
+
+#Non-Hispanic white years sick
+sick_LY_NHW_NT_framework_sens_1 = {
+    "mean": treatment_effect_df_framework_sens_1.query("race == 'NHW' and column == 'years_sick'")['NT mean'].iloc[0],
+    "se": treatment_effect_df_framework_sens_1.query("race == 'NHW' and column == 'years_sick'")['NT se'].iloc[0]
+}
+
+#Non-Hispanic white years sick
+sick_LY_NHW_SC_framework_sens_1 = {
+    "mean": treatment_effect_df_framework_sens_1.query("race == 'NHW' and column == 'years_sick'")['SC mean'].iloc[0],
+    "se": treatment_effect_df_framework_sens_1.query("race == 'NHW' and column == 'years_sick'")['SC se'].iloc[0]
+}
+
+
+#Non-Hispanic white years sick and treated 
+NHW_sick_treated_framework_sens_1 = {"mean": treatment_effect_df_framework_sens_1.query("race == 'NHW' and column == 'years_sick_treated'")['NT mean'].iloc[0], 
+                   "se": treatment_effect_df_framework_sens_1.query("race == 'NHW' and column == 'years_sick_treated'")['NT se'].iloc[0]}
+
+#percent of sick years on treatment 
+NHW_sick_treated_percent_framework_sens_1 = NHW_sick_treated_framework_sens_1['mean']/sick_LY_NHW_NT_framework_sens_1['mean']
+
+```
+
+
+#### Alternative disease characteristics
+
+Under modified disease characteristics, the cumulative incidence of sickness was `{python} convert_to_percent(sick_NHB_NT_standard_sens_1['mean'])`% `{python} create_95_CI_percents(sick_NHB_NT_standard_sens_1)` and `{python} convert_to_percent(sick_NHW_NT_standard_sens_1['mean'])`% `{python} create_95_CI_percents(sick_NHW_NT_standard_sens_1)` for non-Hispanic Black and non-Hispanic white adults, respectively (@supptbl-sens-results). As a result of fewer simulated individuals being affected by the sickness, adding the new treatment to standard of care did not result in improvements in life expectancy for non-Hispanic Black adults in either the standard model or the social factors framework. 
+
+However, consistent with our main analysis, under the social factors framework, adding the new treatment widened disparities in the number of years spent sick by `{python} round((sick_LY_NHW_NT_framework_sens_1["mean"] - sick_LY_NHB_NT_framework_sens_1["mean"]) - (sick_LY_NHW_SC_framework_sens_1["mean"] - sick_LY_NHB_SC_framework_sens_1["mean"]) , ROUND_DIGITS)` years and the fraction of sick years spent on treatment by `{python} convert_to_percent(NHW_sick_treated_percent_framework_sens_1 - NHB_sick_treated_percent_framework_sens_1)` percentage points between non-Hispanic Black and non-Hispanic white adults. This result was not observed in the standard model.
+
+Finally, ICERs for adding the new treatment were less favorable when using the social factors framework compared to the standard model for both groups. As in the main analysis, increases in ICERs were more pronounced for non-Hispanic Black adults than for non-Hispanic white adults under these alternative disease characteristics (@supptbl-NHW-CEA-sens, @supptbl-NHB-CEA-sens).
+
+#### Differential healthcare costs by insurance status
+
+When considering higher healthcare costs for individuals without insurance, the incremental healthcare costs of adding the new treatment increased for both groups (@supptbl-NHW-CEA-sens-costs, @supptbl-NHB-CEA-sens-costs) under the social factors framework. These increases in costs were larger for non-Hispanic Black adults, reflecting their lower rates of health insurance coverage compared with non-Hispanic white adults. 
+
 ## Discussion
 
-Our findings underscore the importance of incorporating social factors in health policy simulation models. In the simplified decision problem, we found that failing to consider social factors produced biased estimates of benefits, healthcare utilization, costs, and health disparities. Results from the standard model suggested that the new treatment would have no impact on health disparities between non-Hispanic Black and non-Hispanic white adults. However, with our social factors framework, the opposite was observed: non-Hispanic white adults experienced greater health outcome gains from the new treatment, which exacerbated health disparities between the two racial/ethnic groups.
+Our findings underscore the importance of incorporating social factors in health policy simulation models. In the simplified decision problem, we found that failing to consider social factors produced biased estimates of benefits, healthcare utilization, costs, and health disparities. Results from our social factors framework suggest that non-Hispanic white adults experienced greater gains in health outcomes from the new treatment, which exacerbated health disparities between non-Hispanic Black and non-Hispanic white adults. Had our framework not been implemented, we may have incorrectly concluded that this treatment would have no impact on health disparities between the two racial/ethnic groups. 
 
-These differences can be attributed to including a key social factor, health insurance coverage. In the social factors framework, we assumed that health insurance status impacted both baseline mortality rates and access to regular healthcare. This first assumption reflected evidence from prior studies that uninsured individuals may face higher baseline mortality risks due to increased prevalence of underlying health conditions, inadequate access to healthcare for other conditions, and increased stress. [@wilper2009health; @kronick2009health] The second assumption asserted that insurance status influenced disease-specific outcomes by affecting healthcare and treatment access. [@fernandez2019medication; @tolbert2024uninsured] Due to racial/ethnic differences in health insurance coverage, with the social factors framework, non-Hispanic Black adults spent a smaller proportion of their sick years receiving treatment compared to non-Hispanic white adults. Reduced treatment access diminished the potential benefits of implementing the new treatment for the non-Hispanic Black group. Our social factors framework highlighted inequities in treatment access and the downstream effect on health outcomes, which was overlooked in the standard model.
 
-The cost-effectiveness analysis further emphasized these results. Adding the new treatment to standard of care yielded smaller QALY gains in the social factors framework compared to the standard model for both racial/ethnic groups, with reductions being more pronounced for non-Hispanic Black adults. Despite these diminished QALY gains, ICERs remained largely consistent between the two models. Reduced access to treatment lowered both incremental QALYs and costs and kept ICERs relatively consistent. It is possible that ICERs may diverge by including the social factors framework in other scenarios involving high up-front costs for diagnosis and treatment initiation, attenuated treatment effectiveness over time, or changes in quality-of-life weights that vary with different health system states. Results from the simplified decision problem highlight two limitations of traditional cost-effectiveness analyses in addressing health disparities. First, as demonstrated by the standard model, these methods often assume homogeneous and guaranteed access to healthcare within the target population. When we accounted for real-world heterogeneity in healthcare access using the social factors framework, the projected incremental costs and QALYs changed. Second, conventional cost-effectiveness metrics do not capture distributional effects on costs and health outcomes, as ICERs cannot reflect for whom benefits were the largest. These findings reinforce that traditional cost-effectiveness analyses alone may be insufficient to inform decision-making on interventions with health equity implications.
+These differences can be attributed to the inclusion of a key social factor, health insurance coverage. In the social factors framework, we assumed that health insurance status impacted both baseline mortality rates and access to regular healthcare. This first assumption reflected evidence from prior studies that uninsured individuals may face higher baseline mortality risks due to increased prevalence of underlying health conditions, inadequate access to healthcare for other conditions, and increased stress. [@wilper2009health; @kronick2009health] The second assumption asserted that insurance status influenced disease-specific outcomes by affecting healthcare and treatment access. [@fernandez2019medication; @tolbert2024uninsured] Due to racial/ethnic differences in health insurance coverage, with the social factors framework, non-Hispanic Black adults spent a smaller proportion of their sick years receiving treatment compared to non-Hispanic white adults. Reduced treatment access diminished the potential benefits of implementing the new treatment for the non-Hispanic Black group. Our social factors framework highlighted inequities in treatment access and the downstream effect on health outcomes, which were overlooked in the standard model.
 
-Health policy simulation models have faced criticism for their lack of effectiveness in addressing health disparities. [@basu2024risk] The Second Panel on Cost-effectiveness and Medicine discussed the importance of assessing who within a population benefits from health interventions, often referred to as the distributional impact. [@10.1093/acprof:oso/9780190492939.003.0012] To fill this gap, several approaches have been developed, including equity impact analyses, extended cost-effectiveness analyses, and distributional cost-effectiveness analyses. [@asaria2016distributional; @verguet2016extended; @pitt2020public; @avancena2021examining] However, these methods do not include recommendations for how to explicitly model social factors and their relationship to disease progression or health system utilization. In particular, distributional cost-effectiveness analyses offer a framework for navigating equity-efficiency trade-offs in decision-making. While the social factors framework does not address these trade-offs, it can improve estimates of the distribution of costs and benefits accrued to individuals across dimensions of disparities required in extended and distributional cost-effectiveness analyses. Additionally, other research has considered including social determinants of health in health policy modeling,[@ali2024incorporating] but to our knowledge, no formal framework exists for integrating these factors into health policy simulation models.
+The cost-effectiveness analysis further emphasized these results. Adding the new treatment to standard of care yielded smaller QALY gains in the social factors framework compared to the standard model for both racial/ethnic groups, with reductions being more pronounced for non-Hispanic Black adults. Despite these diminished QALY gains, ICERs remained largely consistent between the two models. Reduced access to treatment resulted in lower incremental QALYs and costs, while keeping ICERs relatively consistent. It is possible that ICERs may diverge when incorporating the social factors framework in other scenarios involving high up-front costs for diagnosis and treatment initiation, attenuated treatment effectiveness over time, or changes in quality-of-life weights that vary across different health system states. Results from the simplified decision problem highlight two limitations of traditional cost-effectiveness analyses in addressing health disparities. First, as demonstrated by the standard model, these methods often assume homogeneous and guaranteed access to healthcare within the target population, thereby ignoring individuals in the population who lack access to healthcare. When we accounted for real-world heterogeneity in healthcare access using the social factors framework, the projected incremental costs and QALYs changed. Second, conventional cost-effectiveness metrics do not capture distributional effects on costs and health outcomes, as ICERs cannot reflect for whom the benefits were the largest. These findings reinforce that traditional cost-effectiveness analyses alone may be insufficient to inform decision-making on interventions with health equity implications.
 
-Our social factors framework has several limitations. First, the limited availability and quality of individual-level data on social drivers of health can be a nontrivial challenge. [@chunara2024social] These data are often incomplete, requiring researchers to rely on location-based proxies, such as administrative or geographic units (e.g., census tract, postal codes, regional divisions).[@cottrell2020comparison] Building models to address health equity concerns will benefit from greater investment in high-quality, individual-level data on social factors. [@clark2017integrating; @gottlieb2013collecting] Second, incorporating social factors into health policy simulation models requires careful consideration of their complex causal pathways. [@braveman2014social; @rehkopf2016consistency; @kaufman1999seeking] Third, it may be necessary to consider heterogeneity in treatment effectiveness or disease-specific mortality risks, which may vary directly or indirectly due to social drivers of health, family history, or genetic factors. Finally, it may be challenging to apply in certain types of health policy simulation models. For example, state-transition cohort models are generally used for simulating homogeneous cohorts, therefore, incorporating our framework to account for heterogeneous social factors would require stratification.
+Health policy simulation models have faced criticism for their lack of effectiveness in addressing health disparities. [@basu2024risk] The Second Panel on Cost-effectiveness and Medicine discussed the importance of assessing who within a population benefits from health interventions, often referred to as the distributional impact. [@10.1093/acprof:oso/9780190492939.003.0012] To fill this gap, several approaches have been developed, including equity impact analyses, extended cost-effectiveness analyses, and distributional cost-effectiveness analyses. [@asaria2016distributional; @verguet2016extended; @pitt2020public; @avancena2021examining] However, these methods do not provide recommendations for how to explicitly model social factors and their relationship to disease progression or health system utilization. In particular, distributional cost-effectiveness analyses offer a framework for navigating equity-efficiency trade-offs in decision-making. While the social factors framework does not address these trade-offs, it can improve estimates of the distribution of costs and benefits accrued to individuals across dimensions of disparities required in extended and distributional cost-effectiveness analyses. Additionally, other research has considered including social determinants of health in health policy modeling,[@ali2024incorporating] but to our knowledge, no formal framework exists for integrating these factors into health policy simulation models.
 
-In our simplified decision problem, we demonstrated that ignoring heterogeneous health insurance coverage led to the incorrect conclusion that the new treatment did not exacerbate health disparities, potentially resulting in misinformed policy recommendations. By incorporating social factors, our framework permits the evaluation of an intervention's social impact before implementation and facilitates comparisons between clinical and social interventions. Our approach enhances the utility of decision-analytic models as a more effective tool for evaluating health interventions with equity considerations. 
+Our social factors framework has several limitations. First, the limited availability and quality of individual-level data on social drivers of health can pose a nontrivial challenge. [@chunara2024social] These data are often incomplete, requiring researchers to rely on location-based proxies, such as administrative or geographic units (e.g., census tract, postal codes, regional divisions).[@cottrell2020comparison] Building models to address health equity concerns will benefit from greater investment in high-quality, individual-level data on social factors. [@clark2017integrating; @gottlieb2013collecting] Second, incorporating social factors into health policy simulation models requires careful consideration of their complex causal pathways. [@braveman2014social; @rehkopf2016consistency; @kaufman1999seeking] This includes longitudinal, time-dependent processes between social factors, healthcare utilization, and health outcomes. In our simplified decision problem, we assumed that insurance access has an effect on utilization and outcomes but did not incorporate, for example, the later effects of health outcomes on insurance status. Third, it may be necessary to consider heterogeneity in treatment effectiveness or disease-specific mortality risks, which may vary directly or indirectly due to social drivers of health, family history, or genetic factors. Finally, it may be challenging to apply in certain types of health policy simulation models. For example, state-transition cohort models are generally used for simulating homogeneous cohorts. Therefore, incorporating our framework to account for heterogeneous social factors would require stratification.
+
+In our simplified decision problem, we demonstrated that ignoring heterogeneous health insurance coverage led to the incorrect conclusion that the new treatment did not exacerbate health disparities, potentially resulting in misinformed policy recommendations. By incorporating social factors, our framework enables the evaluation of an intervention's social impact before implementation and facilitates comparisons between clinical and social interventions. We recommend our approach as a valuable tool for health policy decision-analytic models, particularly when evaluating health interventions with equity considerations.
 
 ## Acknowledgments {.appendix .unnumbered}
 
@@ -1015,42 +1177,415 @@ Financial support for this study was provided by the National Institutes of Heal
 
 ## Data availability {.appendix .unnumbered}
 
-The Python code to reproduce our results are available at: <https://github.com/StanfordHPDS/social_factors_microsim>.
+The Python code to reproduce our results is available at: <https://github.com/StanfordHPDS/social_factors_microsim>.
 
 ## Supplement Tables {.appendix .unnumbered}
 
+```{python}
+#|include: false
+#params for the sensitivity analysis
+with open("data_and_inputs/parameters/params_sens_1.pkl", "rb") as f:
+    params_sens = pickle.load(f)
+#params for the sensitivity analysis
+with open("data_and_inputs/parameters/params_sens_2.pkl", "rb") as f:
+    params_sens2 = pickle.load(f)
+```
+
+::: {#supptbl-sens-parameters}
+|  |  |  |  |
+|-------------------|------------------|------------------|:-----------------|
+| **Parameter** |  | **Base Case** | **Sensitivity Analysis** |
+| *Disease natural history annual transition probabilities* |  |  |  |
+| Healthy | Sick | `{python} params["pHS"]` | `{python} params_sens["pHS"]` |
+| *Increased mortality risk* |  |  |  |
+| Hazard ratio of death (sick vs. healthy) | | `{python} float(params["rr_SD_not_dt"])` | `{python} float(params_sens["rr_SD_not_dt"])` |
+| *Cost-effectiveness analysis parameters* |  |  |  |
+| State-specific quality-of-life weights | Sick | `{python} params["QALY_mapping"]['S']` | `{python} params_sens["QALY_mapping"]['S']` |
+| Annual state-specific costs | Sick | `{python} convert_to_currency(params["COST_mapping"]["S"])` | `{python} convert_to_currency(params_sens["COST_mapping"]["S"])` |
+
+Modified parameters for sensitivity analysis alternative disease characteristics [^4]
+:::
+
+[^4]: Parameters were modified for both standard model and model with social factors framework
+
+::: {#supptbl-sens-costs-parameters}
+|  |  |  |  |
+|-------------------|------------------|------------------|:-----------------|
+| **Parameter** |  | **Base Case** | **Sensitivity Analysis** |
+| *Cost-effectiveness analysis parameters* |  |  |  |
+| Annual state-specific costs | Sick (insured) | `{python} convert_to_currency(params["COST_mapping"]["S"])` | `{python} convert_to_currency(params_sens2["COST_mapping"]["S"])` |
+| | Sick (uninsured) | `{python} convert_to_currency(params["COST_mapping"]["S"])` | `{python} convert_to_currency(params_sens2["COST_mapping"]["S"] + params_sens2["COST_S_no_ins"])` |
+| Annual treatment costs | New treatment (insured) | `{python} convert_to_currency(params["COST_DT_NT"])` | `{python} convert_to_currency(params["COST_DT_NT"])` |
+| Annual treatment costs | New treatment (uninsured) | `{python} convert_to_currency(params["COST_DT_NT"])` | `{python} convert_to_currency(params["COST_DT_NT"]*params_sens2["COST_DT_multiplier_no_ins"])` |
+Modified parameters for sensitivity analysis of differential healthcare costs by insurance status [^5]
+:::
+
+[^5]: Parameters were only modified for the model with the social factors framework
+
+```{python}
+#| label: suppfig-health-utilization-race
+#| echo: false
+#| fig-cap: Model trace of simulated cohort across health system utilization states over 60 years 
+#| layout-nrow: 2
+#| fig-subcap: 
+#|   - "Comparison between standard model and social factors framework for non-Hispanic Black adults"
+#|   - "Comparison between standard model and social factors framework for non-Hispanic white adults"
+
+
+total_trace_standard_NT_NHB = total_trace_standard_NT[total_trace_standard_NT['race'] == 'NHB']
+
+total_trace_framework_NT_NHB = total_trace_framework_NT[total_trace_framework_NT['race'] == 'NHB']
+
+#Plots the prevalence of individuals who were out of the health system and detected/treated using the standard model and model with social factors framework
+OHS_arr_standard_NT, IHS_arr_standard_NT, DT_arr_standard_NT, DUT_arr_standard_NT  = run_HS_state_graph(total_trace_standard_NT_NHB)
+OHS_arr_framework_NT, IHS_arr_framework_NT, DT_arr_framework_NT, DUT_arr_framework_NT  = run_HS_state_graph(total_trace_framework_NT_NHB)
+
+fig, ax = plt.subplots(figsize = (10,7))
+
+ax.plot(range(starting_age + 0, starting_age + num_cycles), OHS_arr_standard_NT[:num_cycles],  color = '#ff7f00', lw = 2, label = 'Out of health system (standard)')
+ax.plot(range(starting_age + 0, starting_age + num_cycles), DT_arr_standard_NT[:num_cycles],  color = '#377eb8', lw= 2, label = 'Detected/treated (standard)')
+ax.plot(range(starting_age + 0, starting_age + num_cycles), OHS_arr_framework_NT[:num_cycles],  color ='#ff7f00',  lw = 2, ls = '--', label = 'Out of health system (framework')
+ax.plot(range(starting_age + 0, starting_age + num_cycles), DT_arr_framework_NT[:num_cycles],  color = '#377eb8', lw = 2,ls = '--', label = 'Detected/treated (framework)')
+
+subheading_standard_model = Line2D([], [],  color='None', label = '')
+subheading_social_factors_framework = Line2D([], [],  color='None', label = '')
+
+legend_elements = [
+    subheading_standard_model,
+    Line2D([0], [0], color='#ff7f00', lw=2, label='Out of health system  '),
+    Line2D([0], [0], color= '#377eb8', lw=2, label='Detected/treated'),
+    subheading_social_factors_framework,
+    Line2D([0], [0], color='#ff7f00', lw=2,linestyle='--' ,label='Out of health system    '),
+     Line2D([0], [0], color= '#377eb8', lw=2, linestyle='--' ,label='Detected/treated')
+]
+
+# Create legend with adjusted spacing
+legend = ax.legend(
+    handles=legend_elements,
+    facecolor = 'none',
+    borderpad = 0.55,
+    labelspacing = 0.4,
+    fontsize = 14,
+    loc='upper left'
+)
+
+ax.text(
+    0.025, 0.945, "Standard Model",  # Position of the title within the plot area (x, y)
+    transform=ax.transAxes,  # Use axes coordinates (0 to 1 range)
+    ha='left',  # Horizontal alignment of the title
+    va='center',  # Vertical alignment
+    fontweight='bold',  # Bold title
+    fontsize = 14
+)
+
+ax.text(
+    0.025, 0.795, "Social Factors Framework",  # Position of the title within the plot area (x, y)
+    #when rendering word doc: 0.790
+    #when rendering html: 0.795
+    transform=ax.transAxes,  # Use axes coordinates (0 to 1 range)
+    ha='left',  # Horizontal alignment of the title
+    va='center',  # Vertical alignment
+    fontweight='bold',  # Bold title
+    fontsize=14  # Font size of the title
+)
+
+plt.ylabel('Prevalence')
+plt.xlabel('Age')
+plt.show()
+
+
+total_trace_standard_NT_NHW = total_trace_standard_NT[total_trace_standard_NT['race'] == 'NHW']
+
+total_trace_framework_NT_NHW = total_trace_framework_NT[total_trace_framework_NT['race'] == 'NHW']
+
+#Plots the prevalence of individuals who were out of the health system and detected/treated using the standard model and model with social factors framework
+OHS_arr_standard_NT, IHS_arr_standard_NT, DT_arr_standard_NT, DUT_arr_standard_NT  = run_HS_state_graph(total_trace_standard_NT_NHW)
+OHS_arr_framework_NT, IHS_arr_framework_NT, DT_arr_framework_NT, DUT_arr_framework_NT  = run_HS_state_graph(total_trace_framework_NT_NHW)
+
+fig, ax = plt.subplots(figsize = (10,7))
+
+ax.plot(range(starting_age + 0, starting_age + num_cycles), OHS_arr_standard_NT[:num_cycles],  color = '#ff7f00', lw = 2, label = 'Out of health system (standard)')
+ax.plot(range(starting_age + 0, starting_age + num_cycles), DT_arr_standard_NT[:num_cycles],  color = '#377eb8', lw= 2, label = 'Detected/treated (standard)')
+ax.plot(range(starting_age + 0, starting_age + num_cycles), OHS_arr_framework_NT[:num_cycles],  color ='#ff7f00',  lw = 2, ls = '--', label = 'Out of health system (framework')
+ax.plot(range(starting_age + 0, starting_age + num_cycles), DT_arr_framework_NT[:num_cycles],  color = '#377eb8', lw = 2,ls = '--', label = 'Detected/treated (framework)')
+
+subheading_standard_model = Line2D([], [],  color='None', label = '')
+subheading_social_factors_framework = Line2D([], [],  color='None', label = '')
+
+legend_elements = [
+    subheading_standard_model,
+    Line2D([0], [0], color='#ff7f00', lw=2, label='Out of health system  '),
+    Line2D([0], [0], color= '#377eb8', lw=2, label='Detected/treated'),
+    subheading_social_factors_framework,
+    Line2D([0], [0], color='#ff7f00', lw=2,linestyle='--' ,label='Out of health system    '),
+     Line2D([0], [0], color= '#377eb8', lw=2, linestyle='--' ,label='Detected/treated')
+]
+
+# Create legend with adjusted spacing
+legend = ax.legend(
+    handles=legend_elements,
+    facecolor = 'none',
+    borderpad = 0.55,
+    labelspacing = 0.4,
+    fontsize = 14,
+    loc='upper left'
+)
+
+ax.text(
+    0.025, 0.945, "Standard Model",  # Position of the title within the plot area (x, y)
+    transform=ax.transAxes,  # Use axes coordinates (0 to 1 range)
+    ha='left',  # Horizontal alignment of the title
+    va='center',  # Vertical alignment
+    fontweight='bold',  # Bold title
+    fontsize = 14
+)
+
+ax.text(
+    0.025, 0.795, "Social Factors Framework",  # Position of the title within the plot area (x, y)
+    #when rendering word doc: 0.790
+    #when rendering html: 0.795
+    transform=ax.transAxes,  # Use axes coordinates (0 to 1 range)
+    ha='left',  # Horizontal alignment of the title
+    va='center',  # Vertical alignment
+    fontweight='bold',  # Bold title
+    fontsize=14  # Font size of the title
+)
+
+plt.ylabel('Prevalence')
+plt.xlabel('Age')
+plt.show()
+
+```
+
+
+
+
+
+
+
 ::: {#supptbl-cost-qaly}
-| Parameter | Group | Standard Model |   | Social Factors Framework |   |
-|------------|------------|------------|------------|------------|------------|
-|  |  | *Standard of Care* | *New Treatment* | *Standard of Care* | *New Treatment* |
-| QALYs | Non-Hispanic Black | `{python} format_value_and_se(QALY_NHB_SC_standard)` | `{python} format_value_and_se(QALY_NHB_NT_standard)` | `{python} format_value_and_se(QALY_NHB_SC_framework)` | `{python} format_value_and_se(QALY_NHB_NT_framework)` |
-|  | Non-Hispanic white | `{python} format_value_and_se(QALY_NHW_SC_standard)` | `{python} format_value_and_se(QALY_NHW_NT_standard)` | `{python} format_value_and_se(QALY_NHW_SC_framework)` | `{python} format_value_and_se(QALY_NHW_NT_framework)` |
-|  | Difference between groups | `{python} format_value_and_se(QALY_diff_SC_standard)` | `{python} format_value_and_se(QALY_diff_NT_standard)` | `{python} format_value_and_se(QALY_diff_SC_framework)` | `{python} format_value_and_se(QALY_diff_NT_framework)` |
-| Costs | Non-Hispanic Black | `{python} format_currency(Cost_NHB_SC_standard)` | `{python} format_currency(Cost_NHB_NT_standard)` | `{python} format_currency(Cost_NHB_SC_framework)` | `{python} format_currency(Cost_NHB_NT_framework)` |
-|  | Non-Hispanic white | `{python} format_currency(Cost_NHW_SC_standard)` | `{python} format_currency(Cost_NHW_NT_standard)` | `{python} format_currency(Cost_NHW_SC_framework)` | `{python} format_currency(Cost_NHW_NT_framework)` |
-|  | Difference between groups | `{python} format_currency(Cost_diff_SC_standard)` | `{python} format_currency(Cost_diff_NT_standard)` | `{python} format_currency(Cost_diff_SC_framework)` | `{python} format_currency(Cost_diff_NT_framework)` |
+```{python}
+#| echo: false
+
+icer_table = create_cost_qaly_table(total_trace_standard, total_trace_framework)
+gt_ex = (
+    GT(icer_table)
+    .tab_options(
+        table_background_color='white',
+        table_body_hlines_style="none",
+        table_body_vlines_style="none",
+        row_striping_include_table_body=False,
+        quarto_disable_processing=True
+    )
+    .tab_style(
+    style=style.text(style="italic"),
+    locations=loc.body(rows=0))
+    .tab_style(
+        style=style.text(weight="bold"),
+        locations=loc.column_labels()
+    )
+)
+gt_ex
+```
 
 Cost and QALY outcomes for non-Hispanic Black and non-Hispanic white adults
 :::
 
 ::: {#supptbl-NHW-CEA}
-| Framework | Strategy | Cost | QALY | Incremental Cost | Incremental QALY | Incremental Cost-Effectiveness Ratio |
-|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
-| Standard model | Standard of care | `{python} convert_to_currency(Cost_NHW_SC_standard['mean'])` | `{python} round(QALY_NHW_SC_standard['mean'],ROUND_DIGITS)` |  |  |  |
-|  | New treatment | `{python} convert_to_currency(Cost_NHW_NT_standard['mean'])` | `{python} round(QALY_NHW_NT_standard['mean'],ROUND_DIGITS)` | `{python} convert_to_currency(Cost_gain_NHW_standard['mean'])` | `{python} round(QALY_gain_NHW_standard['mean'],ROUND_DIGITS)` | `{python} convert_to_currency(ICER_NHW_standard)` |
-| Social factors framework | Standard of care | `{python} convert_to_currency(Cost_NHW_SC_framework['mean'])` | `{python} round(QALY_NHW_SC_framework['mean'],ROUND_DIGITS)` |  |  |  |
-|  | New treatment | `{python} convert_to_currency(Cost_NHW_NT_framework['mean'])` | `{python} round(QALY_NHW_NT_framework['mean'],ROUND_DIGITS)` | `{python} convert_to_currency(Cost_gain_NHW_framework['mean'])` | `{python} round(QALY_gain_NHW_framework['mean'],ROUND_DIGITS)` | `{python} convert_to_currency(ICER_NHW_framework)` |
+```{python}
+#| echo: false
+
+icer_table = create_bigger_icer_table('NHW', total_trace_standard, total_trace_framework)
+gt_ex = (
+    GT(icer_table)
+    .tab_options(
+        table_background_color='white',
+        table_body_hlines_style="none",
+        table_body_vlines_style="none",
+        row_striping_include_table_body=False,
+        quarto_disable_processing=True
+    )
+    .tab_style(
+        style=style.text(weight="bold"),
+        locations=loc.column_labels()
+    )
+)
+gt_ex
+```
 
 Cost-effectiveness results for non-Hispanic white adults
 :::
 
 ::: {#supptbl-NHB-CEA}
-| Framework | Strategy | Cost | QALY | Incremental Cost | Incremental QALY | Incremental Cost-Effectiveness Ratio |
-|-----------|-----------|-----------|-----------|-----------|-----------|-----------|
-| Standard model | Standard of care | `{python} convert_to_currency(Cost_NHB_NT_standard['mean'])` | `{python} round(QALY_NHB_SC_standard['mean'],ROUND_DIGITS)` |  |  |  |
-|  | New treatment | `{python} convert_to_currency(Cost_NHB_NT_standard['mean'])` | `{python} round(QALY_NHB_NT_standard['mean'],ROUND_DIGITS)` | `{python} convert_to_currency(Cost_gain_NHB_standard['mean'])` | `{python} round(QALY_gain_NHB_standard['mean'],ROUND_DIGITS)` | `{python} convert_to_currency(ICER_NHB_standard)` |
-| Social factors framework | Standard of care | `{python} convert_to_currency(Cost_NHB_SC_framework['mean'])` | `{python} round(QALY_NHB_SC_framework['mean'],ROUND_DIGITS)` |  |  |  |
-|  | New treatment | `{python} convert_to_currency(Cost_NHB_NT_framework['mean'])` | `{python} round(QALY_NHB_NT_framework['mean'],ROUND_DIGITS)` | `{python} convert_to_currency(Cost_gain_NHB_framework['mean'])` | `{python} round(QALY_gain_NHB_framework['mean'],ROUND_DIGITS)` | `{python} convert_to_currency(ICER_NHB_framework)` |
+```{python}
+#| echo: false
+
+icer_table = create_bigger_icer_table('NHB', total_trace_standard, total_trace_framework)
+gt_ex = (
+    GT(icer_table)
+    .tab_options(
+        table_background_color='white',
+        table_body_hlines_style="none",
+        table_body_vlines_style="none",
+        row_striping_include_table_body=False,
+        quarto_disable_processing=True
+    )
+    .tab_style(
+        style=style.text(weight="bold"),
+        locations=loc.column_labels()
+    )
+)
+gt_ex
+```
 
 Cost-effectiveness results for non-Hispanic Black adults
+:::
+
+
+::: {#supptbl-sens-results}
+```{python}
+#| echo: false
+from great_tables import GT, loc, style
+example_table = create_main_outcomes_table(total_trace_standard_sens_1, total_trace_framework_sens_1)
+gt_ex = (
+    GT(example_table)
+    .tab_options(
+        table_background_color='white',
+        table_body_hlines_style="none",
+        table_body_vlines_style="none",
+        row_striping_include_table_body=False,
+        quarto_disable_processing=True
+    )
+    .tab_style(
+    style=style.text(style="italic"),
+    locations=loc.body(rows=0))
+    .tab_style(
+        style=style.text(weight="bold"),
+        locations=loc.column_labels()
+    )
+)
+gt_ex
+```
+
+Main outcomes in sensitivity analysis of alternative disease characteristics
+:::
+
+::: {#supptbl-NHW-CEA-sens}
+```{python}
+#| echo: false
+
+icer_table = create_bigger_icer_table('NHW', total_trace_standard_sens_1, total_trace_framework_sens_1)
+gt_ex = (
+    GT(icer_table)
+    .tab_options(
+        table_background_color='white',
+        table_body_hlines_style="none",
+        table_body_vlines_style="none",
+        row_striping_include_table_body=False,
+        quarto_disable_processing=True
+    )
+    .tab_style(
+        style=style.text(weight="bold"),
+        locations=loc.column_labels()
+    )
+)
+gt_ex
+```
+
+Cost-effectiveness results for non-Hispanic white adults (alternative disease characteristics)
+:::
+
+::: {#supptbl-NHB-CEA-sens}
+```{python}
+#| echo: false
+
+icer_table = create_bigger_icer_table('NHB', total_trace_standard_sens_1, total_trace_framework_sens_1)
+gt_ex = (
+    GT(icer_table)
+    .tab_options(
+        table_background_color='white',
+        table_body_hlines_style="none",
+        table_body_vlines_style="none",
+        row_striping_include_table_body=False,
+        quarto_disable_processing=True
+    )
+    .tab_style(
+        style=style.text(weight="bold"),
+        locations=loc.column_labels()
+    )
+)
+gt_ex
+```
+
+Cost-effectiveness results for non-Hispanic Black adults (alternative disease characteristics)
+:::
+
+```{python}
+#|include: false
+
+#SENSITIVITY ANALYSIS 2: differential costs for those without insurance
+
+##Read in results from standard decision model 
+total_trace_standard_SC = pd.read_csv('results/sensitivity/costs/standard/sc/total_trace.csv')
+total_trace_standard_NT = pd.read_csv('results/sensitivity/costs/standard/nt/total_trace.csv')
+total_trace_standard_SC['treatment_type'] = ['Standard of Care' for i in range(len(total_trace_standard_SC))]
+total_trace_standard_NT['treatment_type'] = ['New Treatment' for i in range(len(total_trace_standard_NT))]
+total_trace_standard_sens_2 = pd.concat([total_trace_standard_SC, total_trace_standard_NT], axis = 0)
+
+#Read in results from model with social factors framework
+total_trace_framework_SC = pd.read_csv('results/sensitivity/costs/framework/sc/total_trace.csv')
+total_trace_framework_NT = pd.read_csv('results/sensitivity/costs/framework/nt/total_trace.csv')
+total_trace_framework_SC['treatment_type'] = ['Standard of Care' for i in range(len(total_trace_framework_SC))]
+total_trace_framework_NT['treatment_type'] = ['New Treatment' for i in range(len(total_trace_framework_NT))]
+total_trace_framework_sens_2 = pd.concat([total_trace_framework_SC, total_trace_framework_NT], axis = 0)
+```
+
+::: {#supptbl-NHW-CEA-sens-costs}
+```{python}
+#| echo: false
+
+icer_table = create_bigger_icer_table('NHW', total_trace_standard_sens_2, total_trace_framework_sens_2)
+gt_ex = (
+    GT(icer_table)
+    .tab_options(
+        table_background_color='white',
+        table_body_hlines_style="none",
+        table_body_vlines_style="none",
+        row_striping_include_table_body=False,
+        quarto_disable_processing=True
+    )
+    .tab_style(
+        style=style.text(weight="bold"),
+        locations=loc.column_labels()
+    )
+)
+gt_ex
+```
+
+Cost-effectiveness results for non-Hispanic white adults (differential costs by insurance status)
+:::
+
+::: {#supptbl-NHB-CEA-sens-costs}
+```{python}
+#| echo: false
+
+icer_table = create_bigger_icer_table('NHB', total_trace_standard_sens_2, total_trace_framework_sens_2)
+gt_ex = (
+    GT(icer_table)
+    .tab_options(
+        table_background_color='white',
+        table_body_hlines_style="none",
+        table_body_vlines_style="none",
+        row_striping_include_table_body=False,
+        quarto_disable_processing=True
+    )
+    .tab_style(
+        style=style.text(weight="bold"),
+        locations=loc.column_labels()
+    )
+)
+gt_ex
+```
+
+Cost-effectiveness results for non-Hispanic Black adults (differential costs by insurance status)
 :::
