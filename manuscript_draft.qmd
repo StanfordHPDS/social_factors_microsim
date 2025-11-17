@@ -139,7 +139,7 @@ We compared model results for a simplified decision problem using two state-tran
 
 In the standard model, each individual had two characteristics (age and race/ethnicity). As individuals aged, they transitioned through three disease natural history states: healthy, sick, and dead. The standard model incorporated racial and ethnic differences in mortality using age-sex-race-ethnicity-specific U.S. life table rates. [@arias2023united] We assumed all individuals were in the health system with regular healthcare access and not detected or treated for the disease. Sick individuals could be detected and treated for the disease and subsequently discontinue treatment.
 
-To incorporate the social factors framework, we modified the standard model by adding a social factor, health insurance status. Based on evidence from prior studies, we assumed health insurance status impacted baseline mortality rates and access to regular healthcare.[@wilper2009health; @hill2024health; @fernandez2019medication; @tolbert2024uninsured] We adjusted age-sex-race-ethnicity-specific U.S. life table mortality rates by insurance status assuming a constant race/ethnicity-specific prevalence of uninsured individuals and a hazard ratio for increased mortality risk among those uninsured. [@wilper2009health; @hill2024health]
+To incorporate the social factors framework, we modified the standard model by adding several new components. First, we added a social factor, health insurance status. Based on evidence from prior studies, we assumed health insurance status impacted baseline mortality rates and access to regular healthcare.[@wilper2009health; @hill2024health; @fernandez2019medication; @tolbert2024uninsured] We adjusted age-sex-race-ethnicity-specific U.S. life table mortality rates by insurance status assuming a constant race/ethnicity-specific prevalence of uninsured individuals and a hazard ratio for increased mortality risk among those uninsured. [@wilper2009health; @hill2024health]
 
 Insurance status also impacted access to routine healthcare and adherence to treatment. In the model with the social factors framework, we added a health system utilization state, "not in health system," which represented individuals without access to routine healthcare. From the outset, uninsured individuals were less likely to be in the health system with routine access to healthcare compared to those with health insurance coverage. [@fernandez2019medication; @tolbert2024uninsured] Details for estimating these probabilities are provided in @sec-population. Individuals not in the health system may enter the health system and gain regular healthcare access over time. Additionally, we assumed that uninsured sick individuals discontinued treatment at faster rates compared to those with insurance. @fig-figure2 provides a visual comparison of the two models and the transition probability dependencies.
 
@@ -186,7 +186,7 @@ with open("data_and_inputs/nhanes_inputs/place_prop_insured.json", "r") as f:
 | *Increased mortality risk* |  |  |  |
 | Hazard ratio of death (sick vs. healthy) | | `{python} float(params["rr_SD_not_dt"])` | `{python} float(params["rr_SD_not_dt"])` |
 | *Health system transition annual probabilities* |  |  |  |
-| Out of health system | In health system | `{python} params["pOI"]` | `{python} params["pOI"]` |
+| Out of health system | In health system | | `{python} params["pOI"]` |
 | In health system | Detected/treated | `{python} f"{params["pDT"]:.2f}"` | `{python} f"{params["pDT"]:.2f}"` |
 | Detected/treated | Detected/untreated | `{python} params["pDTUT"]` | `{python} params["pDTUT"]` |
 | *Hazard ratios on risk of health system transitions (uninsured vs. insured)* |  |  |  |
@@ -207,7 +207,7 @@ with open("data_and_inputs/nhanes_inputs/place_prop_insured.json", "r") as f:
 |  | Non-Hispanic white | `{python} convert_to_percent(1-black_prop)`% [@CDC2018]| `{python} convert_to_percent(1-black_prop)`% [@CDC2018]|
 | Insurance coverage | Non-Hispanic Black |  | `{python} convert_to_percent(NHB_insured_prop)`% [@CDC2018]|
 |  | Non-Hispanic white |  | `{python} convert_to_percent(NHW_insured_prop)`% [@CDC2018]|
-| Has place of routine care | Adults with insurance |  | `{python} convert_to_percent(place_insured_prop)`% [@CDC2018]|
+| In health system[^4] | Adults with insurance |  | `{python} convert_to_percent(place_insured_prop)`% [@CDC2018]|
 |  | Adults without insurance |  | `{python} convert_to_percent(place_uninsured_prop)`% [@CDC2018]|
 | *Cost-effectiveness analysis parameters* |  |  |  |
 | State-specific quality-of-life weights | Healthy | `{python} params["QALY_mapping"]['H']` | `{python} params["QALY_mapping"]['H']` |
@@ -220,6 +220,7 @@ with open("data_and_inputs/nhanes_inputs/place_prop_insured.json", "r") as f:
 : Base case model parameters for standard model and social factors framework[^3] {#tbl-table1}
 
 [^3]: Parameters without citations are assumed parameters. 
+[^4]: We estimated the proportion of our cohort in the health system state using the National Health and Nutrition Examination Survey question for routine place to go for healthcare. 
 
 ### Outcomes and analysis
 
@@ -659,6 +660,7 @@ gt_ex = (
         style=style.text(weight="bold"),
         locations=loc.column_labels()
     )
+    .tab_source_note(source_note="MCSEs: Monte Carlo standard errors")
 )
 gt_ex
 ```
@@ -675,6 +677,7 @@ Additionally, non-Hispanic Black adults and non-Hispanic white adults spent a lo
 ```{python}
 #| label: fig-health-utilization
 #| echo: false
+#| warning: false
 #| fig-cap: Model trace of simulated cohort across health system utilization states over 60 years 
 #| layout-nrow: 2
 #| fig-subcap: 
@@ -742,7 +745,10 @@ ax.text(
 
 plt.ylabel('Prevalence')
 plt.xlabel('Age')
+plt.savefig('figures/figure3a.eps', format='eps')
+plt.savefig('figures/figure3a.png')
 plt.show()
+plt.close()
 
 #Plots the prevalence of individuals who were out of the health system and detected/treated by insurance status using the model with social factors framework
 OHS_arr_framework_NT_ins, IHS_arr_framework_NT_ins, DT_arr_framework_NT_ins, DUT_arr_framework_NT_ins  = run_HS_state_graph(total_trace_framework_NT[total_trace_framework_NT['insurance'] == 'Y'])
@@ -794,7 +800,10 @@ ax.text(
 
 plt.ylabel('Prevalence')
 plt.xlabel('Age')
+plt.savefig('figures/figure3b.eps', format='eps')
+plt.savefig('figures/figure3b.png')
 plt.show()
+plt.close()
 ```
 
 ### Cost-effectiveness analysis
@@ -939,6 +948,7 @@ The ICERs for adding the new treatment were less favorable when using the social
 ```{python}
 #| label: fig-cost-effectiveness
 #| echo: false
+#| warning: false
 #| fig-cap: Cost-effectiveness planes
 #| layout-nrow: 2
 #| fig-subcap: 
@@ -976,7 +986,10 @@ legend_elements = [
 ]
 plt.legend(handles=legend_elements, loc="upper left")
 plt.tight_layout()
+plt.savefig('figures/figure4a.eps', format='eps')
+plt.savefig('figures/figure4a.png')
 plt.show()
+plt.close()
 
 ##plot cost-effectiveness plane for non-Hispanic white adults using the standard model and social factor framework
 fig, ax = plt.subplots(figsize = (10,7))
@@ -1008,7 +1021,11 @@ legend_elements = [
     Line2D([0], [0], color='#6a9f58', lw=2, label='Social Factors Framework')
 ]
 plt.legend(handles=legend_elements, loc="upper left")
+plt.savefig('figures/figure4b.eps', format='eps')
+plt.savefig('figures/figure4b.png')
 plt.show()
+plt.close()
+
 
 ```
 
@@ -1203,10 +1220,10 @@ with open("data_and_inputs/parameters/params_sens_2.pkl", "rb") as f:
 | State-specific quality-of-life weights | Sick | `{python} params["QALY_mapping"]['S']` | `{python} params_sens["QALY_mapping"]['S']` |
 | Annual state-specific costs | Sick | `{python} convert_to_currency(params["COST_mapping"]["S"])` | `{python} convert_to_currency(params_sens["COST_mapping"]["S"])` |
 
-Modified parameters for sensitivity analysis alternative disease characteristics [^4]
+Modified parameters for sensitivity analysis alternative disease characteristics [^5]
 :::
 
-[^4]: Parameters were modified for both standard model and model with social factors framework
+[^5]: Parameters were modified for both standard model and model with social factors framework
 
 ::: {#supptbl-sens-costs-parameters}
 |  |  |  |  |
@@ -1217,10 +1234,10 @@ Modified parameters for sensitivity analysis alternative disease characteristics
 | | Sick (uninsured) | `{python} convert_to_currency(params["COST_mapping"]["S"])` | `{python} convert_to_currency(params_sens2["COST_mapping"]["S"] + params_sens2["COST_S_no_ins"])` |
 | Annual treatment costs | New treatment (insured) | `{python} convert_to_currency(params["COST_DT_NT"])` | `{python} convert_to_currency(params["COST_DT_NT"])` |
 | Annual treatment costs | New treatment (uninsured) | `{python} convert_to_currency(params["COST_DT_NT"])` | `{python} convert_to_currency(params["COST_DT_NT"]*params_sens2["COST_DT_multiplier_no_ins"])` |
-Modified parameters for sensitivity analysis of differential healthcare costs by insurance status [^5]
+Modified parameters for sensitivity analysis of differential healthcare costs by insurance status [^6]
 :::
 
-[^5]: Parameters were only modified for the model with the social factors framework
+[^6]: Parameters were only modified for the model with the social factors framework
 
 ```{python}
 #| label: suppfig-health-utilization-race
