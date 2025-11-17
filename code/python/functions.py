@@ -361,7 +361,7 @@ def create_main_outcomes_table(trace_s, trace_f):
         "years_sick_treated",
     ]
     outcomes_col = [
-        "Life expectancy",
+        "Life expectancy (years)",
         "Cumulative incidence of sickness",
         "Years spent with sickness",
         "Cumulative incidence of being detected/treated",
